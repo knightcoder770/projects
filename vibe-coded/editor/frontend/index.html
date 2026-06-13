@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ═══════════════════════════════════════════════════════════
+       SnapClip - frontend/index.html
+       Main application shell
+
+       Structure:
+       1. Head — meta, fonts, CSS
+       2. App background (animated orbs)
+       3. App grid layout
+          a. Sidebar — logo + tabs + clip library + settings
+          b. Topbar — logo + record controls + hotkey info
+          c. Main — preview panel + right panel (effects/export)
+          d. Timeline bar — clip track + playback controls
+          e. Status bar — system info
+       4. Overlays
+          a. Crop selector overlay (fullscreen)
+          b. Save dialog modal
+          c. Export modal
+          d. Settings modal
+          e. Text overlay modal
+       5. Toast container
+       6. Script tags
+  ═══════════════════════════════════════════════════════════════ -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapClip — Screen Video Editor</title>
+
+  <!-- Google Fonts — Inter for UI, JetBrains Mono for timestamps -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Main stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+<!-- ─────────────────────────────────────────────────────────────
+     ANIMATED BACKGROUND
+     Gradient orbs defined via CSS ::before / ::after on #app-bg
+───────────────────────────────────────────────────────────── -->
+<div id="app-bg" aria-hidden="true"></div>
+
+
+<!-- ─────────────────────────────────────────────────────────────
+     MAIN APP GRID
+───────────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SIDEBAR
+       Contains: Logo, section tabs, clip library, settings tab
+  ═══════════════════════════════════════════════════════════════ -->
+  <aside id="sidebar">
+
+    <!-- Sidebar logo / branding -->
+    <div class="sidebar-header">
+      <div class="app-logo">
+        <div class="logo-icon">✂</div>
+        <span class="logo-text">Snap<span>Clip</span></span>
+      </div>
+    </div>
+
+    <!-- Section tabs: Library | Settings -->
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" data-tab="library" onclick="UI.switchSidebarTab('library')">
+        📁 Library
+      </button>
+      <button class="sidebar-tab" data-tab="settings" onclick="UI.switchSidebarTab('settings')">
+        ⚙️ Settings
+      </button>
+    </div>
+
+    <!-- ── LIBRARY TAB ── -->
+    <div id="tab-library" class="tab-content" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+
+      <!-- Add clip button -->
+      <div style="padding: 8px;">
+        <button class="btn btn-ghost w-full btn-sm" onclick="Library.addClipFromFile()">
+          ＋ Add Clip from File
+        </button>
+      </div>
+
+      <!-- Clip list -->
+      <div id="clip-library">
+        <!-- Clips injected here by library.js -->
+        <div class="library-empty" id="library-empty">
+          <div class="empty-icon">🎬</div>
+          <p>No clips yet.<br/>Record a screen region<br/>or add a video file.</p>
+        </div>
+      </div>
+
+    </div><!-- /tab-library -->
+
+    <!-- ── SETTINGS TAB ── -->
+    <div id="tab-settings" class="tab-content" style="display:none; flex-direction:column; flex:1; overflow-y:auto; padding:10px; gap:10px;">
+
+      <!-- Audio settings -->
+      <div class="panel-section">
+        <div class="panel-section-header">🎙 Audio</div>
+        <div class="panel-section-body">
+
+          <div>
+            <label class="form-label">Audio Mode</label>
+            <select class="form-select" id="setting-audio-mode" onchange="Settings.set('audioMode', this.value)">
+              <option value="system" selected>System Only (recommended)</option>
+              <option value="both">System + Mic</option>
+              <option value="mic">Mic Only</option>
+              <option value="none">No Audio</option>
+            </select>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-label-text">Noise suppression</span>
+            <label class="toggle">
+              <input type="checkbox" id="setting-noise-suppress" onchange="Settings.set('noiseSuppression', this.checked)" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Capture settings -->
+      <div class="panel-section">
+        <div class="panel-section-header">📹 Capture</div>
+        <div class="panel-section-body">
+
+          <div>
+            <label class="form-label">Monitor</label>
+            <select class="form-select" id="setting-monitor" onchange="Settings.set('monitor', this.value)">
+              <option value="0">Primary Monitor</option>
+              <!-- More monitors injected by app.js after screen detection -->
+            </select>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-label-text">Show countdown</span>
+            <label class="toggle">
+              <input type="checkbox" id="setting-countdown" checked onchange="Settings.set('countdown', this.checked)" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-label-text">Highlight cursor</span>
+            <label class="toggle">
+              <input type="checkbox" id="setting-highlight-cursor" onchange="Settings.set('highlightCursor', this.checked)" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Hotkeys settings -->
+      <div class="panel-section">
+        <div class="panel-section-header">⌨️ Hotkeys</div>
+        <div class="panel-section-body" id="hotkeys-panel">
+          <!-- Hotkey rows injected by app.js -->
+          <div class="flex items-center justify-between">
+            <span class="text-muted" style="font-size:11px;">Start Record</span>
+            <span class="font-mono text-accent" style="font-size:11px;">Ctrl+Shift+R</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted" style="font-size:11px;">Stop Record</span>
+            <span class="font-mono text-accent" style="font-size:11px;">Ctrl+Shift+S</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted" style="font-size:11px;">Pause</span>
+            <span class="font-mono text-accent" style="font-size:11px;">Ctrl+Shift+P</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted" style="font-size:11px;">Screenshot</span>
+            <span class="font-mono text-accent" style="font-size:11px;">Ctrl+Shift+X</span>
+          </div>
+          <button class="btn btn-ghost btn-sm w-full mt-2" onclick="Settings.resetHotkeys()">
+            Reset to Defaults
+          </button>
+        </div>
+      </div>
+
+      <!-- GPU / Performance -->
+      <div class="panel-section">
+        <div class="panel-section-header">⚡ Performance</div>
+        <div class="panel-section-body">
+          <div class="flex items-center justify-between">
+            <span class="text-muted" style="font-size:11px;">GPU Encoder</span>
+            <span class="font-mono text-success" style="font-size:11px;" id="gpu-status">Detecting…</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted" style="font-size:11px;">CUDA</span>
+            <span class="font-mono text-success" style="font-size:11px;" id="cuda-status">Detecting…</span>
+          </div>
+          <div class="toggle-row mt-1">
+            <span class="toggle-label-text">Hardware acceleration</span>
+            <label class="toggle">
+              <input type="checkbox" id="setting-hw-accel" checked onchange="Settings.set('hwAccel', this.checked)" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-settings -->
+
+  </aside><!-- /sidebar -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TOP BAR
+       Contains: Record button, audio mode indicator,
+                 FPS badge, timer, pause, stop
+  ═══════════════════════════════════════════════════════════════ -->
+  <header id="topbar">
+
+    <!-- App name (small, topbar) -->
+    <div class="app-logo" style="font-size:14px;">
+      <div class="logo-icon" style="width:22px;height:22px;font-size:11px;">✂</div>
+      <span class="logo-text">Snap<span>Clip</span></span>
+    </div>
+
+    <div class="topbar-divider"></div>
+
+    <!-- Crop / Region button — opens the crop overlay -->
+    <button class="btn btn-ghost btn-sm" id="btn-select-region" onclick="Capture.openCropOverlay()"
+            title="Draw a region to record (or fullscreen)">
+      ⬚ Select Region
+    </button>
+
+    <!-- Fullscreen toggle -->
+    <button class="btn btn-ghost btn-sm" id="btn-fullscreen" onclick="Capture.setFullscreen()"
+            title="Record entire screen">
+      ⛶ Fullscreen
+    </button>
+
+    <div class="topbar-divider"></div>
+
+    <!-- ── Recording controls ── -->
+    <div id="record-controls">
+
+      <!-- Recording indicator dot + timer (hidden when not recording) -->
+      <div class="rec-dot" id="rec-dot"></div>
+      <span id="rec-timer" class="font-mono">00:00:00</span>
+
+      <!-- FPS badge (shows detected FPS during recording) -->
+      <span class="fps-badge font-mono" id="fps-badge">-- FPS</span>
+
+      <!-- START button -->
+      <button class="btn btn-success btn-sm" id="btn-start-record"
+              onclick="Capture.startRecording()" title="Start recording (Ctrl+Shift+R)">
+        ● Record
+      </button>
+
+      <!-- PAUSE button (visible only when recording) -->
+      <button class="btn btn-warning btn-sm hidden" id="btn-pause-record"
+              onclick="Capture.togglePause()" title="Pause recording (Ctrl+Shift+P)">
+        ⏸ Pause
+      </button>
+
+      <!-- STOP button (visible only when recording) -->
+      <button class="btn btn-danger btn-sm hidden" id="btn-stop-record"
+              onclick="Capture.stopRecording()" title="Stop recording (Ctrl+Shift+S)">
+        ■ Stop
+      </button>
+
+    </div><!-- /record-controls -->
+
+  </header><!-- /topbar -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MAIN CONTENT
+       Left: Video preview panel
+       Right: Effects + Export panel
+  ═══════════════════════════════════════════════════════════════ -->
+  <main id="main">
+
+    <!-- ── LEFT: Preview Panel ── -->
+    <div id="preview-panel">
+
+      <!-- Video preview area -->
+      <div id="preview-container">
+
+        <!-- Placeholder shown when no clip loaded -->
+        <div class="preview-placeholder" id="preview-placeholder">
+          <div class="placeholder-icon">🎬</div>
+          <p>Select a region and start recording,<br/>or load a clip from the library.</p>
+        </div>
+
+        <!-- Video playback element (hidden until clip loaded) -->
+        <video id="preview-video" controls style="display:none;"
+               ontimeupdate="Timeline.syncPlayhead(this.currentTime)"
+               onloadedmetadata="Timeline.onVideoLoaded(this)">
+        </video>
+
+        <!-- Live preview canvas (shown during recording) -->
+        <canvas id="preview-canvas"></canvas>
+
+        <!-- Overlay badges: resolution, timestamp -->
+        <div class="preview-overlay">
+          <span class="preview-badge font-mono" id="badge-resolution">--×--</span>
+          <span class="preview-badge font-mono" id="badge-fps">-- fps</span>
+        </div>
+
+      </div><!-- /preview-container -->
+
+      <!-- Video playback controls bar -->
+      <div id="preview-controls">
+
+        <!-- Play/Pause -->
+        <button class="btn btn-ghost btn-icon" id="btn-play-pause"
+                onclick="Player.togglePlayPause()" title="Play / Pause">▶</button>
+
+        <!-- Stop playback -->
+        <button class="btn btn-ghost btn-icon" onclick="Player.stop()" title="Stop">■</button>
+
+        <!-- ── IN / OUT point buttons ── -->
+        <button class="btn btn-ghost btn-icon" id="btn-set-in"
+                onclick="SnapClip.setIn()"
+                title="Set In Point"
+                style="color:#10b981;font-weight:700;font-size:11px;padding:3px 8px;min-width:36px;">
+          I In
+        </button>
+        <button class="btn btn-ghost btn-icon" id="btn-set-out"
+                onclick="SnapClip.setOut()"
+                title="Set Out Point"
+                style="color:#ef4444;font-weight:700;font-size:11px;padding:3px 8px;min-width:36px;">
+          O Out
+        </button>
+        <span id="segment-badge"
+              style="font-size:10px;color:var(--text-muted);padding:0 6px;white-space:nowrap;">
+          0 seg
+        </span>
+
+        <!-- Progress track -->
+        <div class="progress-track" id="progress-track"
+             onclick="Player.seekToClick(event)">
+          <div class="progress-fill" id="progress-fill"></div>
+          <div class="progress-thumb" id="progress-thumb"></div>
+        </div>
+
+        <!-- Time display -->
+        <span class="time-display font-mono" id="time-display">0:00 / 0:00</span>
+
+        <!-- Volume -->
+        <button class="btn btn-ghost btn-icon" onclick="Player.toggleMute()" title="Mute/Unmute"
+                id="btn-mute">🔊</button>
+
+        <input type="range" id="volume-slider" min="0" max="100" value="100"
+               style="width:60px;"
+               oninput="Player.setVolume(this.value)" title="Volume" />
+
+        <!-- Speed selector -->
+        <select class="form-select" id="speed-select" style="width:70px; padding:4px 6px;"
+                onchange="Player.setSpeed(this.value)">
+          <option value="0.25">0.25x</option>
+          <option value="0.5">0.5x</option>
+          <option value="1" selected>1x</option>
+          <option value="1.5">1.5x</option>
+          <option value="2">2x</option>
+          <option value="4">4x</option>
+        </select>
+
+      </div><!-- /preview-controls -->
+
+    </div><!-- /preview-panel -->
+
+
+    <!-- ── RIGHT: Effects + Export Panel ── -->
+    <div style="width:240px;flex-shrink:0;overflow-y:auto;overflow-x:hidden;height:100%;padding-bottom:20px;" id="right-panel-wrapper">
+    <div id="right-panel" style="display:flex;flex-direction:column;gap:10px;padding-right:4px;">
+
+      <!-- ══════════════════════════════════════
+           ASPECT RATIO
+      ══════════════════════════════════════ -->
+      <div class="panel-section">
+        <div class="panel-section-header">
+          ⬚ Aspect Ratio
+          <button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;"
+                  onclick="AspectRatio.reset()">Reset</button>
+        </div>
+        <div class="panel-section-body" style="gap:6px;">
+
+          <!-- Ratio grid -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
+            <div class="ratio-btn" onclick="AspectRatio.apply('16:9','1920x1080')"
+                 title="Widescreen / YouTube">
+              <div class="ratio-box" style="aspect-ratio:16/9;"></div>
+              <span>16:9</span>
+            </div>
+            <div class="ratio-btn" onclick="AspectRatio.apply('9:16','1080x1920')"
+                 title="Shorts / Reels / TikTok">
+              <div class="ratio-box" style="aspect-ratio:9/16;height:28px;width:auto;"></div>
+              <span>9:16</span>
+            </div>
+            <div class="ratio-btn" onclick="AspectRatio.apply('1:1','1080x1080')"
+                 title="Square / Instagram">
+              <div class="ratio-box" style="aspect-ratio:1/1;"></div>
+              <span>1:1</span>
+            </div>
+            <div class="ratio-btn" onclick="AspectRatio.apply('4:5','1080x1350')"
+                 title="Instagram Portrait">
+              <div class="ratio-box" style="aspect-ratio:4/5;"></div>
+              <span>4:5</span>
+            </div>
+            <div class="ratio-btn" onclick="AspectRatio.apply('4:3','1440x1080')"
+                 title="Classic / iPad">
+              <div class="ratio-box" style="aspect-ratio:4/3;"></div>
+              <span>4:3</span>
+            </div>
+            <div class="ratio-btn" onclick="AspectRatio.apply('21:9','2560x1080')"
+                 title="Ultrawide / Cinematic">
+              <div class="ratio-box" style="aspect-ratio:21/9;"></div>
+              <span>21:9</span>
+            </div>
+          </div>
+
+          <!-- Current ratio badge -->
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;">
+            <span style="color:var(--text-muted);">Selected:</span>
+            <span class="font-mono" id="current-ratio-badge"
+                  style="color:var(--accent-secondary);">Original</span>
+          </div>
+
+          <!-- Apply crop button -->
+          <button class="btn btn-secondary btn-sm w-full" onclick="AspectRatio.applyCrop()">
+            Apply Crop
+          </button>
+
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           COLOR GRADING
+      ══════════════════════════════════════ -->
+      <div class="panel-section">
+        <div class="panel-section-header">
+          🎬 Color Grading
+          <button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;"
+                  onclick="ColorGrade.reset()">Reset</button>
+        </div>
+        <div class="panel-section-body">
+
+          <!-- LUT presets -->
+          <label class="form-label">Preset LUT</label>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-bottom:8px;">
+            <div class="lut-chip" onclick="ColorGrade.applyLut('cinematic')"
+                 style="background:linear-gradient(135deg,#1a0a2e,#c0392b);">
+              🎞 Cinematic
+            </div>
+            <div class="lut-chip" onclick="ColorGrade.applyLut('warm')"
+                 style="background:linear-gradient(135deg,#f39c12,#e74c3c);">
+              🌅 Warm
+            </div>
+            <div class="lut-chip" onclick="ColorGrade.applyLut('cool')"
+                 style="background:linear-gradient(135deg,#2c3e50,#3498db);">
+              ❄ Cool
+            </div>
+            <div class="lut-chip" onclick="ColorGrade.applyLut('vintage')"
+                 style="background:linear-gradient(135deg,#8B7355,#DEB887);">
+              📷 Vintage
+            </div>
+            <div class="lut-chip" onclick="ColorGrade.applyLut('noir')"
+                 style="background:linear-gradient(135deg,#000,#555);">
+              🖤 Noir
+            </div>
+            <div class="lut-chip" onclick="ColorGrade.applyLut('matrix')"
+                 style="background:linear-gradient(135deg,#001a00,#00ff41);">
+              💚 Matrix
+            </div>
+            <div class="lut-chip" onclick="ColorGrade.applyLut('sunset')"
+                 style="background:linear-gradient(135deg,#ff6b35,#f7c59f);">
+              🌇 Sunset
+            </div>
+            <div class="lut-chip" onclick="ColorGrade.applyLut('teal_orange')"
+                 style="background:linear-gradient(135deg,#008080,#ff8c00);">
+              🎥 Teal+Orange
+            </div>
+          </div>
+
+          <!-- Manual color controls -->
+          <label class="form-label">Manual Adjust</label>
+
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Brightness</span>
+              <span class="slider-value" id="val-brightness">0</span>
+            </div>
+            <input type="range" min="-1" max="1" step="0.05" value="0"
+                   oninput="ColorGrade.updateSlider('brightness',this.value)" />
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Contrast</span>
+              <span class="slider-value" id="val-contrast">1.0</span>
+            </div>
+            <input type="range" min="0" max="3" step="0.05" value="1"
+                   oninput="ColorGrade.updateSlider('contrast',this.value)" />
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Saturation</span>
+              <span class="slider-value" id="val-saturation">1.0</span>
+            </div>
+            <input type="range" min="0" max="3" step="0.05" value="1"
+                   oninput="ColorGrade.updateSlider('saturation',this.value)" />
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Gamma</span>
+              <span class="slider-value" id="val-gamma">1.0</span>
+            </div>
+            <input type="range" min="0.1" max="3" step="0.05" value="1"
+                   oninput="ColorGrade.updateSlider('gamma',this.value)" />
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Hue Shift</span>
+              <span class="slider-value" id="val-hue">0°</span>
+            </div>
+            <input type="range" min="-180" max="180" step="1" value="0"
+                   oninput="ColorGrade.updateSlider('hue',this.value)" />
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Shadows</span>
+              <span class="slider-value" id="val-shadows">0</span>
+            </div>
+            <input type="range" min="-0.5" max="0.5" step="0.02" value="0"
+                   oninput="ColorGrade.updateSlider('shadows',this.value)" />
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Highlights</span>
+              <span class="slider-value" id="val-highlights">0</span>
+            </div>
+            <input type="range" min="-0.5" max="0.5" step="0.02" value="0"
+                   oninput="ColorGrade.updateSlider('highlights',this.value)" />
+          </div>
+
+          <button class="btn btn-primary btn-sm w-full mt-1"
+                  onclick="ColorGrade.applyAll()">
+            Apply Color Grade
+          </button>
+
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           EFFECTS
+      ══════════════════════════════════════ -->
+      <div class="panel-section">
+        <div class="panel-section-header">
+          ✨ Effects
+          <button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;"
+                  onclick="Effects.resetFilters()">Reset</button>
+        </div>
+        <div class="panel-section-body">
+
+          <div class="filter-grid">
+            <div class="filter-chip" onclick="Effects.applyFilter('grayscale')">⬛ Grayscale</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('sepia')">🟫 Sepia</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('blur')">💧 Blur</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('sharpen')">🔪 Sharpen</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('flip_h')">↔ Flip H</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('flip_v')">↕ Flip V</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('vignette')">🔲 Vignette</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('film_grain')">📽 Film Grain</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('glow')">✨ Glow</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('pixelate')">🟦 Pixelate</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('mirror')">🔀 Mirror</div>
+            <div class="filter-chip" onclick="Effects.applyFilter('edge_detect')">🔷 Edges</div>
+          </div>
+
+          <!-- Blur intensity -->
+          <div class="slider-row mt-1">
+            <div class="slider-label">
+              <span>Blur Intensity</span>
+              <span class="slider-value" id="val-blur">3</span>
+            </div>
+            <input type="range" min="1" max="21" step="2" value="3"
+                   oninput="Effects.updateSlider('blur',this.value)" />
+          </div>
+
+          <!-- Vignette intensity -->
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Vignette</span>
+              <span class="slider-value" id="val-vignette">0.5</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.05" value="0.5"
+                   oninput="Effects.updateSlider('vignette',this.value)" />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           TEXT OVERLAY
+      ══════════════════════════════════════ -->
+      <div class="panel-section">
+        <div class="panel-section-header">📝 Text Overlay</div>
+        <div class="panel-section-body">
+          <button class="btn btn-ghost btn-sm w-full" onclick="UI.openTextModal()">
+            ＋ Add Text
+          </button>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           AUDIO EDIT
+      ══════════════════════════════════════ -->
+      <div class="panel-section">
+        <div class="panel-section-header">🎵 Audio</div>
+        <div class="panel-section-body">
+
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Volume</span>
+              <span class="slider-value" id="val-volume">1.0x</span>
+            </div>
+            <input type="range" min="0" max="3" step="0.05" value="1"
+                   oninput="AudioEdit.setVolume(this.value)" />
+          </div>
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Fade In</span>
+              <span class="slider-value" id="val-fadein">0s</span>
+            </div>
+            <input type="range" min="0" max="5" step="0.1" value="0"
+                   oninput="AudioEdit.setFadeIn(this.value)" />
+          </div>
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Fade Out</span>
+              <span class="slider-value" id="val-fadeout">0s</span>
+            </div>
+            <input type="range" min="0" max="5" step="0.1" value="0"
+                   oninput="AudioEdit.setFadeOut(this.value)" />
+          </div>
+          <button class="btn btn-ghost btn-sm w-full" onclick="AudioEdit.replacAudio()">
+            🔄 Replace Audio Track
+          </button>
+
+          <!-- BGM Mixer -->
+          <div style="background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);
+                      border-radius:10px;padding:10px;margin-top:6px;">
+            <div style="font-size:11px;font-weight:700;color:var(--accent-secondary);
+                        margin-bottom:8px;">🎚 Audio Mixer</div>
+
+            <!-- Video audio volume -->
+            <div class="slider-row">
+              <div class="slider-label">
+                <span>Video Audio</span>
+                <span class="slider-value" id="val-vid-vol">1.0x</span>
+              </div>
+              <input type="range" min="0" max="2" step="0.05" value="1"
+                     oninput="AudioEdit.setMixVideoVol(this.value)" />
+            </div>
+
+            <!-- BGM volume -->
+            <div class="slider-row">
+              <div class="slider-label">
+                <span>BGM Volume</span>
+                <span class="slider-value" id="val-bgm-vol">0.3x</span>
+              </div>
+              <input type="range" min="0" max="1.5" step="0.05" value="0.3"
+                     oninput="AudioEdit.setMixBGMVol(this.value)" />
+            </div>
+
+            <!-- BGM start time -->
+            <div class="slider-row">
+              <div class="slider-label">
+                <span>BGM Starts at</span>
+                <span class="slider-value" id="val-bgm-start">0s</span>
+              </div>
+              <input type="range" min="0" max="60" step="0.5" value="0"
+                     oninput="AudioEdit.setMixBGMStart(this.value)" />
+            </div>
+
+            <!-- BGM file name -->
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;
+                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                 id="mix-bgm-name">No BGM selected — pick a file first</div>
+
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost btn-sm" style="flex:1;"
+                      onclick="AudioEdit.pickBGMForMixer()">
+                📁 Pick BGM
+              </button>
+              <button class="btn btn-primary btn-sm" style="flex:1;"
+                      onclick="AudioEdit.applyMix()">
+                ✓ Mix
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           EDIT CLIP
+      ══════════════════════════════════════ -->
+      <div class="panel-section">
+        <div class="panel-section-header">✂️ Edit Clip</div>
+        <div class="panel-section-body">
+          <!-- Multi-segment info -->
+          <div style="display:flex;align-items:center;justify-content:space-between;
+                      background:rgba(124,58,237,0.1);border-radius:8px;
+                      padding:6px 10px;border:1px solid rgba(124,58,237,0.3);">
+            <span style="font-size:11px;color:var(--text-muted);">
+              Press <b style="color:var(--accent-secondary);">I</b> then
+              <b style="color:var(--accent-danger);">O</b> for each part
+            </span>
+            <span id="segment-count" style="font-size:11px;color:var(--accent-secondary);
+                   font-weight:700;">0 segment(s)</span>
+          </div>
+
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-primary btn-sm" style="flex:2;"
+                    onclick="Editor.trimSelected()">
+              ✂ Trim / Multi-Trim
+            </button>
+            <button class="btn btn-ghost btn-sm" style="flex:1;"
+                    onclick="Editor.clearSegments()" title="Clear all segments">
+              🗑 Clear
+            </button>
+          </div>
+          <button class="btn btn-ghost btn-sm w-full" onclick="Editor.splitAtPlayhead()">
+            ⚡ Split at Playhead
+          </button>
+          <button class="btn btn-ghost btn-sm w-full" onclick="Editor.mergeSelected()">
+            ⛓ Merge All Clips
+          </button>
+          <div>
+            <label class="form-label">Speed</label>
+            <select class="form-select" id="clip-speed-select"
+                    onchange="Editor.setSpeed(this.value)">
+              <option value="0.25">0.25× Slow-mo</option>
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1× Normal</option>
+              <option value="1.5">1.5×</option>
+              <option value="2">2×</option>
+              <option value="4">4× Fast</option>
+            </select>
+          </div>
+          <button class="btn btn-ghost btn-sm w-full" onclick="Effects.addWatermark()">
+            🖼 Watermark
+          </button>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           PRO TOOLS — Premiere Pro Level
+      ══════════════════════════════════════ -->
+      <div class="panel-section">
+        <div class="panel-section-header">🎬 Pro Tools</div>
+        <div class="panel-section-body">
+
+          <label class="form-label">Video Repair</label>
+          <div class="filter-grid">
+            <div class="filter-chip" onclick="ProTools.stabilize()"
+                 title="Remove camera shake">📷 Stabilize</div>
+            <div class="filter-chip" onclick="ProTools.denoise()"
+                 title="Remove video grain">🧹 Denoise</div>
+            <div class="filter-chip" onclick="ProTools.sharpen()"
+                 title="Enhance sharpness">🔪 Sharpen</div>
+            <div class="filter-chip" onclick="ProTools.reverse()"
+                 title="Play clip backwards">⏪ Reverse</div>
+          </div>
+
+          <label class="form-label mt-2">Creative</label>
+          <div class="filter-grid">
+            <div class="filter-chip" onclick="ProTools.freezeFrame()"
+                 title="Freeze a frame">⏸ Freeze Frame</div>
+            <div class="filter-chip" onclick="ProTools.chromaKey('green')"
+                 title="Remove green screen">💚 Green Screen</div>
+            <div class="filter-chip" onclick="ProTools.chromaKey('blue')"
+                 title="Remove blue screen">🔵 Blue Screen</div>
+            <div class="filter-chip" onclick="ProTools.pip()"
+                 title="Picture in picture">📺 PiP</div>
+          </div>
+
+          <label class="form-label mt-2">Audio Pro</label>
+          <div class="filter-grid">
+            <div class="filter-chip" onclick="ProTools.normalizeAudio()"
+                 title="EBU R128 loudness normalize">🔊 Normalize</div>
+            <div class="filter-chip" onclick="ProTools.noiseGate()"
+                 title="Remove background noise">🔇 Noise Gate</div>
+            <div class="filter-chip" onclick="ProTools.autocut()"
+                 title="Remove silence automatically">✂ Auto Cut</div>
+          </div>
+
+          <!-- Freeze frame controls -->
+          <div class="slider-row mt-1">
+            <div class="slider-label">
+              <span>Freeze At (sec)</span>
+              <span class="slider-value" id="val-freeze-at">1.0</span>
+            </div>
+            <input type="range" min="0" max="60" step="0.1" value="1"
+                   oninput="ProTools.setFreezeAt(this.value)" />
+          </div>
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Freeze Duration</span>
+              <span class="slider-value" id="val-freeze-dur">2.0s</span>
+            </div>
+            <input type="range" min="0.5" max="10" step="0.5" value="2"
+                   oninput="ProTools.setFreezeDur(this.value)" />
+          </div>
+
+          <!-- PiP position -->
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+            PiP Position:
+            <select class="form-select" id="pip-position"
+                    style="display:inline-block;width:auto;font-size:10px;padding:2px 6px;">
+              <option value="topright">Top Right</option>
+              <option value="topleft">Top Left</option>
+              <option value="bottomright">Bottom Right</option>
+              <option value="bottomleft">Bottom Left</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           VFX — Modern Shorts/Reels Effects
+      ══════════════════════════════════════ -->
+      <div class="panel-section">
+        <div class="panel-section-header">
+          🎬 VFX &amp; Transitions
+        </div>
+        <div class="panel-section-body">
+
+          <label class="form-label">Transitions (2 clips)</label>
+          <div class="filter-grid">
+            <div class="filter-chip" onclick="VFX.transition('fire_burn_transition')"
+                 style="background:linear-gradient(135deg,#7f1d1d,#dc2626);">
+              🔥 Fire Burn
+            </div>
+            <div class="filter-chip" onclick="VFX.transition('glitch_transition')"
+                 style="background:linear-gradient(135deg,#1e1b4b,#7c3aed);">
+              ⚡ Glitch Cut
+            </div>
+            <div class="filter-chip" onclick="VFX.transition('whip_pan_transition')"
+                 style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9);">
+              💨 Whip Pan
+            </div>
+          </div>
+
+          <label class="form-label mt-2">Overlays</label>
+          <div class="filter-grid">
+            <div class="filter-chip" onclick="VFX.apply('glitch_effect')">⚡ Glitch</div>
+            <div class="filter-chip" onclick="VFX.applyLightLeak('warm')">🌅 Light Leak</div>
+            <div class="filter-chip" onclick="VFX.applyLightLeak('cool')">❄ Cool Leak</div>
+            <div class="filter-chip" onclick="VFX.apply('vhs_effect')">📺 VHS Retro</div>
+            <div class="filter-chip" onclick="VFX.applyLensFlare()">💡 Lens Flare</div>
+            <div class="filter-chip" onclick="VFX.apply('shake_effect', {intensity:12})">📳 Shake</div>
+          </div>
+
+          <label class="form-label mt-2">Motion</label>
+          <div class="filter-grid">
+            <div class="filter-chip" onclick="VFX.applyZoomPunch()">🔍 Zoom Punch</div>
+            <div class="filter-chip" onclick="VFX.apply('ken_burns', {direction:'in'})">📷 Ken Burns In</div>
+            <div class="filter-chip" onclick="VFX.apply('ken_burns', {direction:'out'})">📷 Ken Burns Out</div>
+            <div class="filter-chip" onclick="VFX.apply('bass_boost', {boost_db:6})">🎵 Bass Boost</div>
+          </div>
+
+          <label class="form-label mt-2">Animated Text</label>
+          <div style="display:flex;gap:6px;margin-bottom:6px;">
+            <input type="text" class="path-input" id="vfx-text-input"
+                   placeholder="Enter text..." style="flex:1;font-size:11px;"
+                   data-selectable />
+          </div>
+          <div class="filter-grid">
+            <div class="filter-chip" onclick="VFX.animText('typewriter_text')">⌨ Typewriter</div>
+            <div class="filter-chip" onclick="VFX.animText('pop_text')">💥 Pop!</div>
+            <div class="filter-chip" onclick="VFX.animText('slide_text', {direction:'bottom'})">⬆ Slide Up</div>
+            <div class="filter-chip" onclick="VFX.animText('slide_text', {direction:'left'})">➡ Slide In</div>
+          </div>
+
+          <label class="form-label mt-2">Fade Transitions</label>
+          <div class="filter-grid">
+            <div class="filter-chip" onclick="VFX.fadeOut('black')"
+                 style="background:linear-gradient(135deg,#111,#374151);">
+              ⬛ Fade to Black
+            </div>
+            <div class="filter-chip" onclick="VFX.fadeOut('white')"
+                 style="background:linear-gradient(135deg,#6b7280,#f9fafb);color:#111;">
+              ⬜ Fade to White
+            </div>
+            <div class="filter-chip" onclick="VFX.fadeIn('black')"
+                 style="background:linear-gradient(135deg,#374151,#111);">
+              ▶ Fade In (Black)
+            </div>
+            <div class="filter-chip" onclick="VFX.fadeIn('white')"
+                 style="background:linear-gradient(135deg,#f9fafb,#6b7280);color:#111;">
+              ▶ Fade In (White)
+            </div>
+            <div class="filter-chip" onclick="VFX.fadeInOut('black')"
+                 style="background:linear-gradient(135deg,#111,#374151,#111);">
+              ↔ Fade In+Out
+            </div>
+            <div class="filter-chip" onclick="VFX.crossfade()"
+                 style="background:linear-gradient(135deg,#1e3a5f,#0a0a0f,#1a1a2e);">
+              🌫 Crossfade (2 clips)
+            </div>
+          </div>
+
+          <!-- Fade duration slider -->
+          <div class="slider-row">
+            <div class="slider-label">
+              <span>Fade Duration (sec)</span>
+              <span class="slider-value" id="val-fade-duration">1.5</span>
+            </div>
+            <input type="range" min="0.3" max="5" step="0.1" value="1.5"
+                   oninput="VFX.setFadeDuration(this.value)" />
+          </div>
+
+          <!-- Fade color picker -->
+          <div class="flex items-center gap-2" style="font-size:11px;">
+            <span style="color:var(--text-muted);">Custom fade color:</span>
+            <input type="color" id="fade-color-picker" value="#000000"
+                   style="width:40px;height:24px;border-radius:4px;
+                          border:1px solid var(--glass-border);cursor:pointer;" />
+            <button class="btn btn-ghost btn-sm"
+                    onclick="VFX.fadeOutCustom()"
+                    style="font-size:10px;padding:3px 8px;">Apply Color Fade</button>
+          </div>
+
+          <label class="form-label mt-2">Shorts Tools</label>
+          <div class="filter-grid">
+            <div class="filter-chip" onclick="VFX.apply('tiktok_progress_bar', {color:'ffffff'})">📊 TikTok Bar</div>
+            <div class="filter-chip" onclick="VFX.apply('tiktok_progress_bar', {color:'ff0050'})">🔴 Red Bar</div>
+          </div>
+
+          <!-- Zoom punch time input -->
+          <div class="slider-row mt-1">
+            <div class="slider-label">
+              <span>Zoom Punch at (sec)</span>
+              <span class="slider-value" id="val-zoompunch">1.0</span>
+            </div>
+            <input type="range" min="0" max="30" step="0.1" value="1"
+                   oninput="VFX.setZoomTime(this.value)" />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           EXPORT
+      ══════════════════════════════════════ -->
+      <div class="panel-section">
+        <div class="panel-section-header">💾 Export</div>
+        <div class="panel-section-body">
+          <button class="btn btn-primary w-full" onclick="UI.openExportModal()">
+            Export Video
+          </button>
+          <button class="btn btn-ghost btn-sm w-full" onclick="Export.exportGif()">
+            🎞 Export as GIF
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /right-panel -->
+    </div><!-- /right-panel-wrapper -->
+
+  </main><!-- /main -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TIMELINE BAR
+       Shows all clips in order, playhead, trim handles
+  ═══════════════════════════════════════════════════════════════ -->
+  <div id="timeline-bar">
+
+    <div class="timeline-header">
+      <span class="timeline-title">Timeline</span>
+
+      <!-- Timeline controls -->
+      <div style="display:flex; gap:6px; margin-left:auto; align-items:center;">
+
+        <!-- Zoom in/out -->
+        <button class="btn btn-ghost btn-icon" onclick="Timeline.zoom(-1)" title="Zoom Out">−</button>
+        <span class="text-muted font-mono" id="timeline-zoom" style="font-size:11px;">1×</span>
+        <button class="btn btn-ghost btn-icon" onclick="Timeline.zoom(1)" title="Zoom In">+</button>
+
+        <div class="topbar-divider"></div>
+
+        <!-- Skip to start/end -->
+        <button class="btn btn-ghost btn-icon" onclick="Player.skipToStart()" title="Go to Start">⏮</button>
+        <button class="btn btn-ghost btn-icon" onclick="Player.skipToEnd()" title="Go to End">⏭</button>
+
+        <!-- Clear timeline -->
+        <button class="btn btn-ghost btn-sm" style="font-size:11px;"
+                onclick="Timeline.clearTimeline()" title="Clear all clips">
+          🗑 Clear
+        </button>
+
+      </div>
+    </div><!-- /timeline-header -->
+
+    <!-- Clip track area — clips injected by timeline.js -->
+    <div id="timeline-track">
+      <div class="timeline-playhead" id="timeline-playhead"></div>
+      <div class="timeline-empty" id="timeline-empty">
+        🎬 Add clips from the library to start editing
+      </div>
+      <!-- Timeline clip blocks appended here by JS -->
+    </div>
+
+    <!-- Keyboard shortcut hints -->
+  <div style="padding:4px 16px 6px; display:flex; gap:16px; font-size:10px; color:var(--text-muted); border-top:1px solid var(--glass-border); background:rgba(0,0,0,0.2);">
+    <span><kbd style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;font-size:10px;">I</kbd> Set In</span>
+    <span><kbd style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;font-size:10px;">O</kbd> Set Out</span>
+    <span><kbd style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;font-size:10px;">Space</kbd> Play/Pause</span>
+    <span><kbd style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;font-size:10px;">← →</kbd> Step Frame</span>
+    <span><kbd style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;font-size:10px;">Shift+← →</kbd> Jump 5s</span>
+    <span style="margin-left:auto;">Right-click timeline or video for more options</span>
+  </div>
+
+</div><!-- /timeline-bar -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       STATUS BAR
+  ═══════════════════════════════════════════════════════════════ -->
+  <footer id="statusbar">
+
+    <div class="statusbar-left">
+      <div class="status-item">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">Ready</span>
+      </div>
+      <div class="status-item">
+        <span>CPU:</span>
+        <span class="status-value font-mono" id="stat-cpu">--%</span>
+      </div>
+      <div class="status-item">
+        <span>RAM:</span>
+        <span class="status-value font-mono" id="stat-ram">-- GB</span>
+      </div>
+    </div>
+
+    <div class="statusbar-right">
+      <div class="status-item">
+        <span class="status-value font-mono" id="stat-gpu">RTX 3050</span>
+      </div>
+      <div class="status-item">
+        <span id="stat-platform">--</span>
+      </div>
+      <div class="status-item">
+        <span class="text-muted">SnapClip v1.0</span>
+      </div>
+    </div>
+
+  </footer><!-- /statusbar -->
+
+</div><!-- /app -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CROP OVERLAY
+     Fullscreen transparent overlay for drawing crop region.
+     Activated when user clicks "Select Region"
+═══════════════════════════════════════════════════════════════ -->
+<div id="crop-overlay">
+
+  <!-- Crosshair instruction text -->
+  <div id="crop-instruction" style="
+    position: fixed;
+    top: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(6,182,212,0.4);
+    color: #06b6d4;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 201;
+  ">
+    🖱 Click and drag to select recording region
+  </div>
+
+  <!-- Crop selection box -->
+  <div class="crop-selection" id="crop-selection">
+    <!-- Dimension label -->
+    <div class="crop-label" id="crop-label">0 × 0</div>
+    <!-- Corner resize handles -->
+    <div class="crop-handle tl"></div>
+    <div class="crop-handle tr"></div>
+    <div class="crop-handle bl"></div>
+    <div class="crop-handle br"></div>
+  </div>
+
+  <!-- Action buttons appear after selection is drawn -->
+  <div class="crop-actions" id="crop-actions">
+    <button class="btn btn-success" onclick="Capture.confirmRegion()">
+      ✓ Confirm Region
+    </button>
+    <button class="btn btn-ghost" onclick="Capture.closeCropOverlay()">
+      ✕ Cancel
+    </button>
+  </div>
+
+</div><!-- /crop-overlay -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SAVE DIALOG MODAL
+     Appears after recording stops — choose where + format to save
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop hidden" id="modal-save">
+  <div class="modal">
+
+    <div class="modal-title">💾 Save Recording</div>
+    <div class="modal-subtitle">Choose format, quality and save location</div>
+
+    <!-- Format selection -->
+    <label class="form-label">Format</label>
+    <div class="save-options" id="format-options">
+      <div class="format-option selected" onclick="Export.selectFormat('mp4', this)">
+        <div class="format-ext">.mp4</div>
+        <div class="format-desc">H.264 · Best compat</div>
+      </div>
+      <div class="format-option" onclick="Export.selectFormat('mkv', this)">
+        <div class="format-ext">.mkv</div>
+        <div class="format-desc">H.265 · Smaller size</div>
+      </div>
+      <div class="format-option" onclick="Export.selectFormat('gif', this)">
+        <div class="format-ext">.gif</div>
+        <div class="format-desc">Animated · No audio</div>
+      </div>
+    </div>
+
+    <!-- Quality selection -->
+    <label class="form-label mt-2">Quality</label>
+    <div class="quality-grid" id="quality-options">
+      <div class="quality-option" onclick="Export.selectQuality('low', this)">Low</div>
+      <div class="quality-option" onclick="Export.selectQuality('medium', this)">Med</div>
+      <div class="quality-option selected" onclick="Export.selectQuality('high', this)">High</div>
+      <div class="quality-option" onclick="Export.selectQuality('lossless', this)">Max</div>
+    </div>
+
+    <!-- Save path -->
+    <label class="form-label mt-2">Save Location</label>
+    <div class="path-input-row">
+      <input type="text" class="path-input" id="save-path-input"
+             placeholder="/home/user/Videos/clip.mp4" readonly />
+      <button class="btn btn-ghost btn-sm" onclick="Export.browseSavePath()">Browse</button>
+    </div>
+
+    <!-- Estimated size -->
+    <div class="flex items-center gap-2 mt-2" style="font-size:11px; color:var(--text-muted);">
+      <span>Estimated size:</span>
+      <span class="font-mono text-accent" id="est-size">-- MB</span>
+      <span>·</span>
+      <span>Duration:</span>
+      <span class="font-mono text-accent" id="rec-duration">--:--</span>
+    </div>
+
+    <!-- GPU badge -->
+    <div class="flex items-center gap-2 mt-1" style="font-size:11px; color:var(--text-muted);">
+      <span>Encoder:</span>
+      <span class="font-mono text-success" id="encoder-badge">NVENC (RTX 3050)</span>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="UI.closeModal('modal-save')">Cancel</button>
+      <button class="btn btn-primary" id="btn-save-confirm" onclick="Export.saveRecording()">
+        Save Video
+      </button>
+    </div>
+
+  </div>
+</div><!-- /modal-save -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     EXPORT MODAL
+     Re-export an existing clip with new settings
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop hidden" id="modal-export">
+  <div class="modal">
+
+    <div class="modal-title">📤 Export Clip</div>
+    <div class="modal-subtitle">Re-encode the current clip with new settings</div>
+
+    <!-- Format -->
+    <label class="form-label">Output Format</label>
+    <div class="save-options" id="export-format-options">
+      <div class="format-option selected" onclick="Export.selectExportFormat('mp4', this)">
+        <div class="format-ext">.mp4</div>
+        <div class="format-desc">H.264 · Universal</div>
+      </div>
+      <div class="format-option" onclick="Export.selectExportFormat('mkv', this)">
+        <div class="format-ext">.mkv</div>
+        <div class="format-desc">H.265 · Compact</div>
+      </div>
+      <div class="format-option" onclick="Export.selectExportFormat('gif', this)">
+        <div class="format-ext">.gif</div>
+        <div class="format-desc">Looping GIF</div>
+      </div>
+    </div>
+
+    <!-- Quality -->
+    <label class="form-label mt-2">Quality</label>
+    <div class="quality-grid">
+      <div class="quality-option" onclick="Export.selectExportQuality('low', this)">Low</div>
+      <div class="quality-option" onclick="Export.selectExportQuality('medium', this)">Med</div>
+      <div class="quality-option selected" onclick="Export.selectExportQuality('high', this)">High</div>
+      <div class="quality-option" onclick="Export.selectExportQuality('lossless', this)">Max</div>
+    </div>
+
+    <!-- Resolution -->
+    <label class="form-label mt-2">Resolution</label>
+    <select class="form-select" id="export-resolution">
+      <optgroup label="── Desktop ──">
+        <option value="original">Original (keep source)</option>
+        <option value="1920x1080">1920 × 1080 — Full HD (16:9)</option>
+        <option value="1280x720">1280 × 720 — HD (16:9)</option>
+        <option value="854x480">854 × 480 — SD (16:9)</option>
+      </optgroup>
+      <optgroup label="── Phone Portrait (9:16) ──">
+        <option value="1080x1920">1080 × 1920 — Full HD Portrait</option>
+        <option value="720x1280">720 × 1280 — HD Portrait</option>
+        <option value="1080x2340">1080 × 2340 — Tall (19.5:9)</option>
+      </optgroup>
+      <optgroup label="── Phone Landscape (16:9) ──">
+        <option value="1920x1080">1920 × 1080 — Landscape Full HD</option>
+        <option value="1280x720">1280 × 720 — Landscape HD</option>
+      </optgroup>
+      <optgroup label="── Square / Social ──">
+        <option value="1080x1080">1080 × 1080 — Square (1:1)</option>
+        <option value="1080x1350">1080 × 1350 — Instagram (4:5)</option>
+        <option value="720x720">720 × 720 — Square Small</option>
+      </optgroup>
+      <optgroup label="── Shorts / Reels / TikTok ──">
+        <option value="1080x1920">1080 × 1920 — Shorts/Reels/TikTok</option>
+        <option value="576x1024">576 × 1024 — Shorts Small</option>
+      </optgroup>
+    </select>
+
+    <!-- Output path -->
+    <label class="form-label mt-2">Output Path</label>
+    <div class="path-input-row">
+      <input type="text" class="path-input" id="export-path-input"
+             placeholder="Choose output path…" readonly />
+      <button class="btn btn-ghost btn-sm" onclick="Export.browseExportPath()">Browse</button>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="UI.closeModal('modal-export')">Cancel</button>
+      <button class="btn btn-primary" onclick="Export.exportClip()">Export</button>
+    </div>
+
+  </div>
+</div><!-- /modal-export -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TEXT OVERLAY MODAL
+     Add custom text to a clip at a specific time and position
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop hidden" id="modal-text">
+  <div class="modal">
+
+    <div class="modal-title">📝 Add Text Overlay</div>
+    <div class="modal-subtitle">Add text that appears on your clip at a specific time</div>
+
+    <!-- Text input -->
+    <label class="form-label">Text</label>
+    <input type="text" class="path-input" id="text-overlay-input"
+           placeholder="Enter text…" style="width:100%; margin-bottom:12px;"
+           data-selectable />
+
+    <!-- Position -->
+    <label class="form-label">Position</label>
+    <select class="form-select" id="text-position" style="margin-bottom:12px;">
+      <option value="bottomcenter">Bottom Center (Subtitle)</option>
+      <option value="center">Center</option>
+      <option value="topcenter">Top Center</option>
+      <option value="topleft">Top Left</option>
+      <option value="topright">Top Right</option>
+      <option value="bottomleft">Bottom Left</option>
+      <option value="bottomright">Bottom Right</option>
+    </select>
+
+    <!-- Font size + Color row -->
+    <div class="flex gap-2">
+      <div style="flex:1;">
+        <label class="form-label">Font Size</label>
+        <input type="number" class="path-input" id="text-font-size"
+               value="32" min="10" max="120" style="width:100%;" data-selectable />
+      </div>
+      <div style="flex:1;">
+        <label class="form-label">Color</label>
+        <input type="color" id="text-color" value="#ffffff"
+               style="width:100%; height:35px; border-radius:8px;
+                      border:1px solid var(--glass-border);
+                      background:var(--glass-bg); cursor:pointer;" />
+      </div>
+    </div>
+
+    <!-- Time range -->
+    <div class="flex gap-2 mt-2">
+      <div style="flex:1;">
+        <label class="form-label">Start (sec)</label>
+        <input type="number" class="path-input" id="text-start-time"
+               value="0" min="0" step="0.1" style="width:100%;" data-selectable />
+      </div>
+      <div style="flex:1;">
+        <label class="form-label">End (sec)</label>
+        <input type="number" class="path-input" id="text-end-time"
+               placeholder="Until end" min="0" step="0.1"
+               style="width:100%;" data-selectable />
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="UI.closeModal('modal-text')">Cancel</button>
+      <button class="btn btn-primary" onclick="Effects.applyTextOverlay()">Add Text</button>
+    </div>
+
+  </div>
+</div><!-- /modal-text -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ENCODING PROGRESS OVERLAY
+     Shown while FFmpeg is encoding in the background
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop hidden" id="modal-encoding">
+  <div class="modal" style="text-align:center; width:360px;">
+
+    <div style="font-size:32px; margin-bottom:12px;">⚡</div>
+    <div class="modal-title" style="text-align:center;">Encoding…</div>
+    <div class="modal-subtitle" style="text-align:center;" id="encoding-status-text">
+      Using NVENC on RTX 3050
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-track" style="height:6px; margin:16px 0;">
+      <div class="progress-fill" id="encoding-progress" style="transition: width 0.3s ease;"></div>
+    </div>
+
+    <div class="font-mono text-accent" id="encoding-percent" style="font-size:24px; font-weight:700;">
+      0%
+    </div>
+
+    <div class="text-muted mt-1" id="encoding-detail" style="font-size:11px;">
+      Preparing…
+    </div>
+
+  </div>
+</div><!-- /modal-encoding -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TOAST NOTIFICATION CONTAINER
+     Toasts injected here by app.js UI.toast()
+═══════════════════════════════════════════════════════════════ -->
+<div id="toast-container"></div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     JAVASCRIPT — Load order matters!
+     1. app.js      — Core init, pywebview bridge, UI utilities
+     2. library.js  — Clip library management
+     3. timeline.js — Timeline rendering and interaction
+     4. editor.js equivalent functions are in app.js for now
+═══════════════════════════════════════════════════════════════ -->
+<script src="js/app.js"></script>
+<script src="js/library.js"></script>
+<script src="js/timeline.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Recorder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">⬤ REC</div>
+    <div class="tagline">audio capture studio</div>
+  </header>
+
+  <section class="device-section">
+    <label>INPUT DEVICE</label>
+    <select id="deviceSelect">
+      <option value="">⟳ loading devices...</option>
+    </select>
+  </section>
+
+  <section class="visualizer-section">
+    <canvas id="viz" width="400" height="80"></canvas>
+    <div class="timer" id="timer">00:00</div>
+  </section>
+
+  <section class="controls">
+    <button id="recordBtn" class="btn-record" onclick="toggleRecord()">
+      <span class="dot"></span> START RECORDING
+    </button>
+  </section>
+
+  <section class="status-bar">
+    <div id="status">ready — select a device and hit record</div>
+  </section>
+
+  <section class="recordings-section">
+    <div class="rec-header">
+      <span>SAVED RECORDINGS</span>
+      <button onclick="loadRecordings()" class="btn-refresh">↻ refresh</button>
+    </div>
+    <div id="recList" class="rec-list">
+      <div class="empty">no recordings yet</div>
+    </div>
+  </section>
+</div>
+
+<script src="/static/recorder.js"></script>
+</body>
+</html>

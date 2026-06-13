@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ParkEase — New Parker Entry</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0a0a0f;
+      --surface: #13131a;
+      --border:  #2a2a3a;
+      --accent:  #f0c040;
+      --text:    #e8e8f0;
+      --muted:   #7070a0;
+      --success: #40d080;
+      --danger:  #ff4060;
+      --warning: #ff9f40;
+      --radius:  12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(240,192,64,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(240,192,64,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,15,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+
+    .logo-row  { display: flex; align-items: center; gap: 12px; }
+    .logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 8px; display: grid; place-items: center; font-size: 18px; }
+    .logo-text { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; }
+    .logo-text span { color: var(--accent); }
+
+    .topbar-right { display: flex; gap: 10px; }
+
+    .btn-sm {
+      padding: 8px 16px; border-radius: 8px;
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
+      cursor: pointer; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text);
+      text-decoration: none; transition: all 0.2s; letter-spacing: 0.3px;
+    }
+    .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── LAYOUT ── */
+    .main {
+      position: relative; z-index: 1;
+      max-width: 680px; margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      margin-bottom: 36px;
+      animation: fadeDown 0.5s ease both;
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 30px; font-weight: 800; line-height: 1;
+    }
+
+    .page-title span { color: var(--accent); }
+    .page-subtitle { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+    /* ── SLOT PREVIEW BANNER ── */
+    .slot-preview {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 20px;
+      animation: fadeUp 0.5s 0.05s ease both;
+      transition: border-color 0.3s;
+    }
+
+    .slot-preview.has-slot { border-color: var(--success); }
+    .slot-preview.full     { border-color: var(--danger); }
+
+    .slot-icon {
+      font-size: 36px;
+      flex-shrink: 0;
+    }
+
+    .slot-preview-text h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px; font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .slot-preview-text p {
+      font-size: 12px; color: var(--muted);
+    }
+
+    .slot-badge-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+    .mini-badge {
+      font-size: 10px; font-weight: 700;
+      padding: 3px 8px; border-radius: 4px;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    .mini-badge.green  { background: rgba(64,208,128,0.15); color: var(--success); }
+    .mini-badge.yellow { background: rgba(240,192,64,0.15);  color: var(--accent); }
+    .mini-badge.red    { background: rgba(255,64,96,0.15);   color: var(--danger); }
+
+    /* ── FORM CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.1s; }
+    .card:nth-child(2) { animation-delay: 0.2s; }
+    .card:nth-child(3) { animation-delay: 0.3s; }
+
+    .card-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .card-num {
+      width: 26px; height: 26px;
+      background: var(--accent); color: var(--bg);
+      border-radius: 6px; display: grid; place-items: center;
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; }
+    .card-desc  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── FORM FIELDS ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-grid.single { grid-template-columns: 1fr; }
+
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+
+    label {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.8px; text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="email"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(240,192,64,0.1);
+    }
+
+    input::placeholder { color: var(--muted); opacity: 0.5; }
+    .input-hint { font-size: 11px; color: var(--muted); }
+
+    /* ── DURATION PICKER ── */
+    .duration-wrap { position: relative; }
+
+    .duration-presets {
+      display: flex; gap: 8px;
+      flex-wrap: wrap; margin-top: 10px;
+    }
+
+    .preset-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover,
+    .preset-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(240,192,64,0.08);
+    }
+
+    /* ── COST PREVIEW ── */
+    .cost-preview {
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(240,192,64,0.06);
+      border: 1px solid rgba(240,192,64,0.15);
+      border-radius: 8px;
+      display: none;
+    }
+
+    .cost-preview.visible { display: block; }
+
+    .cost-row {
+      display: flex; justify-content: space-between;
+      font-size: 12px; padding: 4px 0;
+      color: var(--muted);
+    }
+
+    .cost-row span:last-child { color: var(--text); }
+    .cost-row.total span { color: var(--accent); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+
+    /* ── SUBMIT ── */
+    .btn-submit {
+      width: 100%; padding: 16px;
+      background: var(--accent); color: var(--bg);
+      border: none; border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 15px;
+      cursor: pointer; margin-top: 8px;
+      transition: all 0.2s;
+      animation: fadeUp 0.5s 0.35s ease both;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background: #f5d060;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(240,192,64,0.3);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.4; cursor: not-allowed;
+    }
+
+    /* ── SUCCESS STATE ── */
+    .success-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      place-items: center;
+    }
+
+    .success-overlay.show { display: grid; }
+
+    .success-card {
+      background: var(--surface);
+      border: 1px solid var(--success);
+      border-radius: 20px;
+      padding: 48px 40px;
+      text-align: center;
+      max-width: 380px; width: 90%;
+      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .success-icon { font-size: 56px; margin-bottom: 16px; }
+
+    .success-card h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px; font-weight: 800;
+      color: var(--success); margin-bottom: 8px;
+    }
+
+    .success-card p { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+
+    .assigned-slot {
+      font-family: 'Syne', sans-serif;
+      font-size: 64px; font-weight: 800;
+      color: var(--accent);
+      line-height: 1; margin: 16px 0;
+    }
+
+    .success-actions { display: flex; gap: 10px; margin-top: 24px; }
+
+    .success-btn {
+      flex: 1; padding: 12px;
+      border-radius: 8px; cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 13px;
+      transition: all 0.2s;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .success-btn.primary {
+      background: var(--accent); color: var(--bg); border: none;
+    }
+
+    .success-btn.secondary {
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .success-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* ── NO SETUP STATE ── */
+    .no-setup {
+      text-align: center; padding: 80px 20px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .no-setup .icon { font-size: 48px; margin-bottom: 16px; }
+
+    .no-setup h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px; color: var(--text); margin-bottom: 8px;
+    }
+
+    .no-setup p  { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 32px; right: 32px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 18px;
+      font-size: 13px; display: flex; align-items: center; gap: 10px;
+      z-index: 999; transform: translateY(80px); opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      max-width: 300px;
+    }
+
+    .toast.show    { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: var(--success); }
+    .toast.error   { border-color: var(--danger); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeDown { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(12px);  } to { opacity:1; transform:translateY(0); } }
+    @keyframes popIn    { from { opacity:0; transform:scale(0.85); }       to { opacity:1; transform:scale(1); } }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .card { padding: 20px; }
+      .topbar { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="logo-row">
+    <div class="logo-icon">🅿️</div>
+    <div class="logo-text">Park<span>Ease</span></div>
+  </div>
+  <div class="topbar-right">
+    <a href="dashboard.html" class="btn-sm">← Dashboard</a>
+    <a href="setup.html"     class="btn-sm">⚙ Setup</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main" id="mainContent">
+
+  <!-- Loading state -->
+  <div style="text-align:center;padding:80px 20px;color:var(--muted)" id="loadingState">
+    <div style="font-size:32px;margin-bottom:12px">⏳</div>
+    <div>Loading setup...</div>
+  </div>
+
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-card">
+    <div class="success-icon">🎉</div>
+    <h2>Slot Assigned!</h2>
+    <p>Parker has been assigned to slot</p>
+    <div class="assigned-slot" id="assignedSlotNo">—</div>
+    <p id="assignedSlotType" style="color:var(--accent);font-size:12px"></p>
+    <div class="success-actions">
+      <button class="success-btn secondary" onclick="addAnother()">+ Add Another</button>
+      <a href="dashboard.html" class="success-btn primary">View Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toastIcon"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+  // ============================================================
+  // STATE
+  // ============================================================
+  let setupConfig    = null   // Fetched from /api/setup
+  let selectedDuration = null // Currently selected duration in minutes
+  let freeCount      = 0      // How many slots are free
+
+  // ============================================================
+  // ON PAGE LOAD — fetch setup config first
+  // so we know which fields to show
+  // ============================================================
+  window.addEventListener('load', async () => {
+    try {
+      // Fetch setup config
+      const setupRes  = await fetch('http://localhost:5000/api/setup')
+      const setupData = await setupRes.json()
+
+      // Also fetch dashboard to know free slot count
+      const dashRes   = await fetch('http://localhost:5000/api/dashboard')
+      const dashData  = await dashRes.json()
+
+      if (!setupData.success) {
+        showNoSetup()
+        return
+      }
+
+      setupConfig = setupData
+
+      if (dashData.success) {
+        freeCount = dashData.dashboard.filter(s => s.status === 'free').length
+      }
+
+      buildForm()
+
+    } catch (err) {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="no-setup">
+          <div class="icon">🔌</div>
+          <h2>Cannot connect to server</h2>
+          <p>Make sure Flask is running on port 5000</p>
+          <a href="setup.html" class="btn-sm">Go to Setup</a>
+        </div>`
+    }
+  })
+
+  // ============================================================
+  // SHOW NO SETUP STATE
+  // ============================================================
+  function showNoSetup() {
+    document.getElementById('mainContent').innerHTML = `
+      <div class="no-setup">
+        <div class="icon">⚙️</div>
+        <h2>Setup Not Done Yet</h2>
+        <p>Please configure your parking lot first before adding parkers.</p>
+        <a href="setup.html" class="btn-sm" style="display:inline-block;padding:12px 24px;background:var(--accent);color:var(--bg);border-radius:8px;font-family:Syne,sans-serif;font-weight:700;text-decoration:none;">
+          Go to Setup →
+        </a>
+      </div>`
+  }
+
+  // ============================================================
+  // BUILD FORM DYNAMICALLY
+  // Based on fields_to_collect from setup config
+  // ============================================================
+  function buildForm() {
+    const fields   = setupConfig.fields_to_collect   // e.g. ["name","contact"]
+    const rate     = setupConfig.rate_per_5min
+    const fine     = setupConfig.fine_per_10min
+    const freeStat = freeCount > 0
+      ? `<span class="mini-badge green">✅ ${freeCount} slots free</span>`
+      : `<span class="mini-badge red">❌ Lot is full</span>`
+
+    const priorityCount = setupConfig.priority_slots.length
+    const priorityStat  = priorityCount > 0
+      ? `<span class="mini-badge yellow">⭐ ${priorityCount} priority slots</span>`
+      : ''
+
+    // Build input fields HTML from manager's chosen fields
+    // This is the key concept — dynamic form based on config!
+    const fieldInputs = fields.map(field => {
+      const config = fieldConfig(field)
+      return `
+        <div class="form-group">
+          <label>${config.label}</label>
+          <input
+            type="${config.type}"
+            id="field_${field}"
+            placeholder="${config.placeholder}"
+          />
+        </div>`
+    }).join('')
+
+    // If no fields chosen by manager, show a message
+    const fieldsSection = fields.length > 0
+      ? `<div class="form-grid ${fields.length === 1 ? 'single' : ''}">${fieldInputs}</div>`
+      : `<div style="font-size:13px;color:var(--muted);padding:12px 0">
+           No extra details configured. Only duration will be collected.
+         </div>`
+
+    // Inject full form HTML
+    document.getElementById('mainContent').innerHTML = `
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-title">New <span>Parker</span> Entry</div>
+        <div class="page-subtitle">// fill in details to assign a slot</div>
+      </div>
+
+      <!-- Slot availability banner -->
+      <div class="slot-preview ${freeCount > 0 ? 'has-slot' : 'full'}">
+        <div class="slot-icon">${freeCount > 0 ? '🟢' : '🔴'}</div>
+        <div class="slot-preview-text">
+          <h3>${freeCount > 0 ? 'Slots Available' : 'Parking Lot Full'}</h3>
+          <p>${freeCount > 0 ? 'Best available slot will be auto-assigned' : 'No slots available right now'}</p>
+          <div class="slot-badge-row">
+            ${freeStat}
+            ${priorityStat}
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 1: Parker Details -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-num">1</div>
+          <div>
+            <div class="card-title">Parker Details</div>
+            <div class="card-desc">Information collected from the parker</div>
+          </div>
+        </div>
+        ${fieldsSection}
+      </div>
+
+      <!-- Card 2: Duration -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-num">2</div>
+          <div>
+            <div class="card-title">Parking Duration</div>
+            <div class="card-desc">How long does the parker plan to stay?</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Duration (minutes)</label>
+          <input
+            type="number"
+            id="durationInput"
+            placeholder="Enter minutes e.g. 60"
+            min="5" step="5"
+            oninput="onDurationChange(this.value)"
+          />
+          <div class="input-hint">Minimum 5 minutes</div>
+        </div>
+
+        <!-- Quick presets -->
+        <div class="duration-presets">
+          <button class="preset-btn" onclick="setDuration(30)">30 min</button>
+          <button class="preset-btn" onclick="setDuration(60)">1 hr</button>
+          <button class="preset-btn" onclick="setDuration(90)">1.5 hr</button>
+          <button class="preset-btn" onclick="setDuration(120)">2 hr</button>
+          <button class="preset-btn" onclick="setDuration(180)">3 hr</button>
+          <button class="preset-btn" onclick="setDuration(360)">6 hr</button>
+        </div>
+
+        <!-- Live cost preview -->
+        <div class="cost-preview" id="costPreview">
+          <div class="cost-row">
+            <span>Duration</span>
+            <span id="costDuration">—</span>
+          </div>
+          <div class="cost-row">
+            <span>Rate</span>
+            <span>₹${rate} per 5 mins</span>
+          </div>
+          <div class="cost-row total" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+            <span>Estimated Cost</span>
+            <span id="costTotal">—</span>
+          </div>
+          <div class="cost-row" style="margin-top:6px;font-size:11px">
+            <span>Overtime fine</span>
+            <span style="color:var(--warning)">₹${fine} per 10 mins if late</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button
+        class="btn-submit"
+        id="submitBtn"
+        onclick="submitEntry()"
+        ${freeCount === 0 ? 'disabled' : ''}
+      >
+        ${freeCount > 0 ? '🚗 Assign Slot' : '❌ Lot is Full'}
+      </button>
+    `
+  }
+
+  // ============================================================
+  // FIELD CONFIG — label, type, placeholder for each field key
+  // ============================================================
+  function fieldConfig(field) {
+    const map = {
+      name:           { label: '👤 Name',           type: 'text',   placeholder: 'e.g. Rahul Kumar' },
+      age:            { label: '🎂 Age',             type: 'number', placeholder: 'e.g. 28' },
+      contact:        { label: '📞 Contact Number',  type: 'tel',    placeholder: 'e.g. 9876543210' },
+      vehicle_number: { label: '🚗 Vehicle Number',  type: 'text',   placeholder: 'e.g. TN01AB1234' },
+      email:          { label: '📧 Email',           type: 'email',  placeholder: 'e.g. rahul@email.com' },
+    }
+    // Fallback for any unknown field
+    return map[field] || { label: field, type: 'text', placeholder: `Enter ${field}` }
+  }
+
+  // ============================================================
+  // DURATION — preset buttons
+  // ============================================================
+  function setDuration(mins) {
+    document.getElementById('durationInput').value = mins
+    // Highlight active preset
+    document.querySelectorAll('.preset-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.textContent) === mins ||
+        b.textContent.includes(mins/60 + ' hr') ||
+        b.onclick.toString().includes(`(${mins})`)
+      )
+    })
+    // Simpler active highlight
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'))
+    event.target.classList.add('active')
+
+    onDurationChange(mins)
+  }
+
+  // ============================================================
+  // DURATION CHANGE — update cost preview
+  // ============================================================
+  function onDurationChange(val) {
+    const mins = parseInt(val)
+    selectedDuration = mins
+
+    const preview = document.getElementById('costPreview')
+    if (!mins || mins < 5) { preview.classList.remove('visible'); return }
+
+    const rate  = setupConfig.rate_per_5min
+    const cost  = (mins / 5) * rate
+
+    const hrs   = Math.floor(mins / 60)
+    const rem   = mins % 60
+    const label = hrs > 0
+      ? `${hrs}h ${rem > 0 ? rem + 'm' : ''}`.trim()
+      : `${mins} mins`
+
+    document.getElementById('costDuration').textContent = label
+    document.getElementById('costTotal').textContent    = `₹${cost.toFixed(2)}`
+    preview.classList.add('visible')
+  }
+
+  // ============================================================
+  // SUBMIT ENTRY — collect form data and call API
+  // ============================================================
+  async function submitEntry() {
+    const duration = parseInt(document.getElementById('durationInput')?.value)
+
+    // Validate duration
+    if (!duration || duration < 5) {
+      showToast('error', '⚠️', 'Please enter a valid duration (min 5 mins)!')
+      return
+    }
+
+    // Collect all dynamic fields
+    const parkerDetails = {}
+    for (const field of setupConfig.fields_to_collect) {
+      const el = document.getElementById(`field_${field}`)
+      if (el) parkerDetails[field] = el.value.trim()
+    }
+
+    // Build payload
+    const payload = {
+      duration_minutes: duration,
+      ...parkerDetails
+    }
+
+    // Disable button while waiting
+    const btn = document.getElementById('submitBtn')
+    btn.disabled = true
+    btn.textContent = '⏳ Assigning...'
+
+    try {
+      const res  = await fetch('http://localhost:5000/api/assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        // Show success overlay with assigned slot number
+        const isPriority = setupConfig.priority_slots.includes(data.slot_no)
+        document.getElementById('assignedSlotNo').textContent   = `#${data.slot_no}`
+        document.getElementById('assignedSlotType').textContent =
+          isPriority ? '⭐ Priority Slot' : 'Standard Slot'
+
+        document.getElementById('successOverlay').classList.add('show')
+      } else {
+        showToast('error', '❌', data.message || 'Could not assign slot!')
+        btn.disabled = false
+        btn.textContent = '🚗 Assign Slot'
+      }
+
+    } catch (err) {
+      showToast('error', '🔌', 'Cannot connect to server!')
+      btn.disabled = false
+      btn.textContent = '🚗 Assign Slot'
+    }
+  }
+
+  // ============================================================
+  // ADD ANOTHER — reset form for next parker
+  // ============================================================
+  function addAnother() {
+    document.getElementById('successOverlay').classList.remove('show')
+    // Reload page to refresh slot count
+    window.location.reload()
+  }
+
+  // ============================================================
+  // TOAST
+  // ============================================================
+  function showToast(type, icon, msg) {
+    const toast = document.getElementById('toast')
+    document.getElementById('toastIcon').textContent = icon
+    document.getElementById('toastMsg').textContent  = msg
+    toast.className = `toast ${type} show`
+    setTimeout(() => toast.classList.remove('show'), 3500)
+  }
+</script>
+
+</body>
+</html>

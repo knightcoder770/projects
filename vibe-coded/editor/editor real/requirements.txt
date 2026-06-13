@@ -1,0 +1,34 @@
+# SnapClip - Requirements
+# Install with: pip install -r requirements.txt
+# For Arch Linux: pip install -r requirements.txt --break-system-packages
+
+# ─── Core UI Bridge ───────────────────────────────────────────────
+pywebview==5.0.5           # Renders HTML/CSS/JS as a native desktop window
+                           # Works on both Windows and Arch Linux
+
+# ─── Screen Capture ───────────────────────────────────────────────
+mss==9.0.1                 # Ultra fast cross-platform screen capture
+                           # Uses OS-level APIs, very low overhead
+opencv-python==4.9.0.80    # Frame processing, filtering, CUDA support
+                           # For GPU: install opencv-contrib-python instead
+numpy==1.26.4              # Array operations on frames (fast buffer handling)
+
+# ─── Audio Capture ────────────────────────────────────────────────
+pyaudio==0.2.14            # Cross-platform audio capture
+                           # Windows: uses WASAPI, Linux: uses PulseAudio/Pipewire
+soundcard==0.4.3           # Higher-level audio, better for system audio on Windows
+                           # Falls back to pyaudio on Linux
+
+# ─── Video Encoding ───────────────────────────────────────────────
+ffmpeg-python==0.2.0       # Python wrapper for FFmpeg
+                           # Handles NVENC (GPU encoding) for RTX 3050
+moviepy==1.0.3             # High-level video editing (trim, merge, speed, effects)
+
+# ─── Hotkeys ──────────────────────────────────────────────────────
+pynput==1.7.6              # Global hotkey listener
+                           # Works system-wide even when app is not focused
+
+# ─── Utilities ────────────────────────────────────────────────────
+Pillow==10.3.0             # Image processing (thumbnails, overlays, watermarks)
+psutil==5.9.8              # System info (CPU/GPU usage monitoring)
+screeninfo==0.8.1          # Detect monitors and resolutions (multi-monitor support)

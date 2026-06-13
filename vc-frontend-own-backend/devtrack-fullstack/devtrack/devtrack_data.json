@@ -1,0 +1,99 @@
+{
+    "project_id": "1",
+    "goal_id": 2,
+    "default_data": {
+        "streak": {
+            "current": 1,
+            "longest": 1,
+            "last_logged": "2026-06-04"
+        },
+        "total_sessions": [],
+        "completed_projects": [],
+        "goals": []
+    },
+    "daily_data": {
+        "date": [
+            "2026-05-20",
+            "2026-06-03",
+            "2026-06-04"
+        ],
+        "time": [
+            "21:46:25",
+            "07:39:13",
+            "20:56:24"
+        ],
+        "hours_coded": [
+            3,
+            4,
+            5
+        ],
+        "work": [
+            "i builded a tool to monitor my coding journey",
+            "did data cleaning using numpy (filling nans,finding ouliers,standardizing)",
+            "i made a program and learned how to use pandas and manipulate data in a csv file.... it was much easier than numpy since it's a csv and not a 2d  array/matrix [i used corr(),groupby(),info(),etc...]"
+        ],
+        "learning_outcome": [
+            "i learnt how to integrate my 1st week projects",
+            "leraned to clean data using numpy",
+            "i learned how to manipulate data in csv file using pandas"
+        ]
+    },
+    "project": {
+        "1": {
+            "name": "DEVTRACK",
+            "description": "it is used to monitor my coding journey",
+            "tech_stack": [
+                "python",
+                "api"
+            ],
+            "status": "completed",
+            "github_url": "",
+            "date_started": "2026-05-25",
+            "last_worked": "2026-05-27",
+            "completed_date": "2026-05-27"
+        }
+    },
+    "goals": {
+        "1": {
+            "goal": "complete devtrack",
+            "deadline": "2026-05-24",
+            "status": "completed",
+            "created": "2026-05-23",
+            "completed": "2026-05-25",
+            "message": "\ud83d\udd5b 1 left"
+        },
+        "2": {
+            "goal": "complete pandas",
+            "deadline": "2026-06-05",
+            "status": "completed",
+            "created": "2026-06-04",
+            "completed": "2026-06-04",
+            "message": ""
+        }
+    },
+    "skills": {
+        "python": [
+            "pandas",
+            "numpy"
+        ]
+    },
+    "github": {
+        "username": "knightcoder770",
+        "profile": {
+            "username": "knightcoder770",
+            "fullname": "HARSHAVARDHAN S",
+            "followers": 0,
+            "following": 0,
+            "repo_count": 1,
+            "joined date": "2025-05-26T06:47:36Z"
+        },
+        "repos": [
+            {
+                "repo_name": "DEVTRACK",
+                "star_count": 0,
+                "language_used": null,
+                "last_updated": "2026-05-20T00:45:57Z"
+            }
+        ]
+    }
+}

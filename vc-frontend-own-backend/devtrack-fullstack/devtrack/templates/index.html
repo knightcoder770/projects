@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DevTrack</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<div id="scanlines"></div>
+
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="logo">
+      <span class="logo-hex">⬡</span>
+      <span class="logo-text">DEV<span class="accent">TRACK</span></span>
+      <span class="version">v0.1</span>
+    </div>
+
+    <div class="streak-badge">
+      <span>🔥</span>
+      <div>
+        <div class="streak-num" id="streak-num">0</div>
+        <div class="streak-lbl">day streak</div>
+      </div>
+    </div>
+
+    <nav>
+      <a class="nav-link active" data-page="dashboard"  onclick="nav('dashboard')"><span>◈</span> Dashboard</a>
+      <a class="nav-link"        data-page="log"         onclick="nav('log')"><span>◉</span> Log Session</a>
+      <a class="nav-link"        data-page="projects"    onclick="nav('projects')"><span>◧</span> Projects</a>
+      <a class="nav-link"        data-page="goals"       onclick="nav('goals')"><span>◎</span> Goals</a>
+      <a class="nav-link"        data-page="skills"      onclick="nav('skills')"><span>◬</span> Skills</a>
+      <a class="nav-link"        data-page="github"      onclick="nav('github')"><span>⬡</span> GitHub Stats</a>
+      <a class="nav-link"        data-page="report"      onclick="nav('report')"><span>◫</span> Weekly Report</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main">
+    <div id="page-dashboard" class="page active"></div>
+    <div id="page-log"       class="page"></div>
+    <div id="page-projects"  class="page"></div>
+    <div id="page-goals"     class="page"></div>
+    <div id="page-skills"    class="page"></div>
+    <div id="page-github"    class="page"></div>
+    <div id="page-report"    class="page"></div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div id="modal-bg" onclick="closeModal()">
+  <div id="modal" onclick="event.stopPropagation()">
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script src="/static/js/log.js"></script>
+<script src="/static/js/projects.js"></script>
+<script src="/static/js/goals.js"></script>
+<script src="/static/js/skills.js"></script>
+<script src="/static/js/github.js"></script>
+<script src="/static/js/report.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

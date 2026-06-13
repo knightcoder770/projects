@@ -1,0 +1,64 @@
+{
+    "project_id": 0,
+    "goal_id": 1,
+    "default_data": {
+        "streak": {
+            "current": 1,
+            "longest": 1,
+            "last_logged": "2026-05-20"
+        },
+        "total_sessions": [],
+        "completed_projects": [],
+        "goals": []
+    },
+    "daily_data": {
+        "date": [
+            "2026-05-20"
+        ],
+        "time": [
+            "21:46:25"
+        ],
+        "hours_coded": [
+            3
+        ],
+        "work": [
+            "i builded a tool to monitor my coding journey"
+        ],
+        "learning_outcome": [
+            "i learnt how to integrate my 1st week projects"
+        ]
+    },
+    "project": {},
+    "goals": {
+        "1": {
+            "goal": "complete devtrack",
+            "deadline": "2026-05-24",
+            "status": "completed",
+            "created": "2026-05-23",
+            "completed": "2026-05-25",
+            "message": "\ud83d\udd5b 1 left"
+        }
+    },
+    "skills": {
+        "python": []
+    },
+    "github": {
+        "username": "knightcoder770",
+        "profile": {
+            "username": "knightcoder770",
+            "fullname": "HARSHAVARDHAN S",
+            "followers": 0,
+            "following": 0,
+            "repo_count": 1,
+            "joined date": "2025-05-26T06:47:36Z"
+        },
+        "repos": [
+            {
+                "repo_name": "DEVTRACK",
+                "star_count": 0,
+                "language_used": null,
+                "last_updated": "2026-05-20T00:45:57Z"
+            }
+        ]
+    }
+}

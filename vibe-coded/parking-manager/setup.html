@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ParkEase — Manager Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── RESET & VARIABLES ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0f;
+      --surface:   #13131a;
+      --border:    #2a2a3a;
+      --accent:    #f0c040;
+      --accent2:   #ff6b35;
+      --text:      #e8e8f0;
+      --muted:     #7070a0;
+      --success:   #40d080;
+      --danger:    #ff4060;
+      --radius:    12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── BACKGROUND GRID ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(240,192,64,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(240,192,64,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      margin-bottom: 56px;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 22px;
+    }
+
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .logo-text span { color: var(--accent); }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      margin-left: 58px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── STEP INDICATOR ── */
+    .steps {
+      display: flex;
+      gap: 0;
+      margin-bottom: 40px;
+      animation: fadeDown 0.6s 0.1s ease both;
+    }
+
+    .step {
+      flex: 1;
+      padding: 12px 0;
+      text-align: center;
+      font-size: 11px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-bottom: 2px solid var(--border);
+      color: var(--muted);
+      transition: all 0.3s;
+    }
+
+    .step.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .step.done {
+      color: var(--success);
+      border-bottom-color: var(--success);
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.15s; }
+    .card:nth-child(2) { animation-delay: 0.25s; }
+    .card:nth-child(3) { animation-delay: 0.35s; }
+    .card:nth-child(4) { animation-delay: 0.45s; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .card-num {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      color: var(--bg);
+      border-radius: 6px;
+      display: grid; place-items: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── FORM ELEMENTS ── */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-row.single { grid-template-columns: 1fr; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(240,192,64,0.12);
+    }
+
+    input::placeholder { color: var(--muted); opacity: 0.6; }
+
+    .input-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── SLOT TAGS ── */
+    .slot-tags-wrapper {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      min-height: 48px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      cursor: text;
+      transition: border-color 0.2s;
+    }
+
+    .slot-tags-wrapper:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(240,192,64,0.12);
+    }
+
+    .slot-tag {
+      background: rgba(240,192,64,0.15);
+      border: 1px solid rgba(240,192,64,0.3);
+      color: var(--accent);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      animation: popIn 0.2s ease;
+    }
+
+    .slot-tag button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .slot-tag button:hover { opacity: 1; }
+
+    .tag-input {
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      width: 80px;
+      flex: 1;
+      min-width: 60px;
+      font-size: 13px;
+    }
+
+    /* ── FIELD CHECKBOXES ── */
+    .fields-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .field-checkbox {
+      position: relative;
+    }
+
+    .field-checkbox input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0; height: 0;
+    }
+
+    .field-checkbox label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: 13px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-weight: 400;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .field-checkbox label::before {
+      content: '';
+      width: 16px; height: 16px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      display: grid; place-items: center;
+    }
+
+    .field-checkbox input:checked + label {
+      border-color: var(--accent);
+      background: rgba(240,192,64,0.08);
+      color: var(--accent);
+    }
+
+    .field-checkbox input:checked + label::before {
+      background: var(--accent);
+      border-color: var(--accent);
+      content: '✓';
+      font-size: 10px;
+      color: var(--bg);
+      font-weight: 700;
+    }
+
+    .field-locked {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .field-locked label {
+      border-color: var(--success) !important;
+      background: rgba(64,208,128,0.06) !important;
+      color: var(--success) !important;
+    }
+
+    .locked-badge {
+      font-size: 9px;
+      background: var(--success);
+      color: var(--bg);
+      border-radius: 3px;
+      padding: 1px 5px;
+      margin-left: auto;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── RATE DISPLAY ── */
+    .rate-preview {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: rgba(240,192,64,0.06);
+      border: 1px solid rgba(240,192,64,0.15);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      display: none;
+    }
+
+    .rate-preview.visible { display: block; }
+
+    .rate-preview span { color: var(--accent); font-weight: 500; }
+
+    /* ── SUBMIT BUTTON ── */
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-submit:hover {
+      background: #f5d060;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(240,192,64,0.3);
+    }
+
+    .btn-submit:active { transform: translateY(0); }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ── TOAST NOTIFICATION ── */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-width: 320px;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: var(--success); }
+    .toast.error   { border-color: var(--danger);  }
+
+    .toast-icon { font-size: 18px; }
+    .toast-msg  { color: var(--text); line-height: 1.4; }
+
+    /* ── SUCCESS STATE ── */
+    .success-banner {
+      display: none;
+      background: rgba(64,208,128,0.08);
+      border: 1px solid rgba(64,208,128,0.3);
+      border-radius: var(--radius);
+      padding: 24px 32px;
+      text-align: center;
+      margin-bottom: 20px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .success-banner.show { display: block; }
+
+    .success-banner h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      color: var(--success);
+      margin-bottom: 8px;
+    }
+
+    .success-banner p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .btn-dashboard {
+      display: inline-block;
+      padding: 12px 28px;
+      background: var(--success);
+      color: var(--bg);
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-dashboard:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(64,208,128,0.3);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .fields-grid { grid-template-columns: 1fr 1fr; }
+      .card { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-row">
+      <div class="logo-icon">🅿️</div>
+      <div class="logo-text">Park<span>Ease</span></div>
+    </div>
+    <div class="subtitle">// manager setup console</div>
+  </header>
+
+  <!-- STEP INDICATOR -->
+  <div class="steps">
+    <div class="step active" id="step1">01 — Setup</div>
+    <div class="step" id="step2">02 — Dashboard</div>
+    <div class="step" id="step3">03 — Entry</div>
+    <div class="step" id="step4">04 — Checkout</div>
+  </div>
+
+  <!-- SUCCESS BANNER (hidden until setup done) -->
+  <div class="success-banner" id="successBanner">
+    <h2>✅ Parking Lot is Ready!</h2>
+    <p>Setup complete. You can now manage parkers from the dashboard.</p>
+    <a href="dashboard.html" class="btn-dashboard">Go to Dashboard →</a>
+  </div>
+
+  <!-- CARD 1: SLOT COUNT -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-num">1</div>
+      <div>
+        <div class="card-title">Parking Slots</div>
+        <div class="card-desc">How many total slots does your lot have?</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Total Slots</label>
+        <input type="number" id="totalSlots" placeholder="e.g. 20" min="1" max="500"/>
+        <div class="input-hint">Total physical slots in your parking lot</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD 2: PRIORITY SLOTS -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-num">2</div>
+      <div>
+        <div class="card-title">Priority Slots</div>
+        <div class="card-desc">These are assigned first — closest to exit, elevator, etc.</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Priority Slot Numbers</label>
+      <!-- Tag input — type a number and press Enter/comma to add -->
+      <div class="slot-tags-wrapper" id="tagsWrapper" onclick="document.getElementById('tagInput').focus()">
+        <input
+          type="text"
+          id="tagInput"
+          class="tag-input"
+          placeholder="Type slot no. + Enter"
+          autocomplete="off"
+        />
+      </div>
+      <div class="input-hint">Press Enter or comma after each slot number · e.g. 1, 2, 3</div>
+    </div>
+  </div>
+
+  <!-- CARD 3: PARKER FIELDS -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-num">3</div>
+      <div>
+        <div class="card-title">Parker Details to Collect</div>
+        <div class="card-desc">Choose which info to ask from each parker</div>
+      </div>
+    </div>
+
+    <div class="fields-grid">
+      <!-- Duration is always collected — locked -->
+      <div class="field-checkbox field-locked">
+        <input type="checkbox" id="field_duration" checked disabled/>
+        <label for="field_duration">
+          ⏱ Duration
+          <span class="locked-badge">ALWAYS</span>
+        </label>
+      </div>
+
+      <!-- Optional fields -->
+      <div class="field-checkbox">
+        <input type="checkbox" id="field_name" value="name"/>
+        <label for="field_name">👤 Name</label>
+      </div>
+      <div class="field-checkbox">
+        <input type="checkbox" id="field_age" value="age"/>
+        <label for="field_age">🎂 Age</label>
+      </div>
+      <div class="field-checkbox">
+        <input type="checkbox" id="field_contact" value="contact"/>
+        <label for="field_contact">📞 Contact</label>
+      </div>
+      <div class="field-checkbox">
+        <input type="checkbox" id="field_vehicle" value="vehicle_number"/>
+        <label for="field_vehicle">🚗 Vehicle No.</label>
+      </div>
+      <div class="field-checkbox">
+        <input type="checkbox" id="field_email" value="email"/>
+        <label for="field_email">📧 Email</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD 4: RATES -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-num">4</div>
+      <div>
+        <div class="card-title">Pricing & Fines</div>
+        <div class="card-desc">Set your parking rates and overtime penalty</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Rate per 5 Minutes (₹)</label>
+        <input type="number" id="ratePer5" placeholder="e.g. 10" min="0" step="0.5"/>
+        <div class="input-hint">Normal parking cost every 5 mins</div>
+      </div>
+      <div class="form-group">
+        <label>Fine per 10 Minutes Overtime (₹)</label>
+        <input type="number" id="finePer10" placeholder="e.g. 25" min="0" step="0.5"/>
+        <div class="input-hint">Penalty for every 10 mins over booked time</div>
+      </div>
+    </div>
+
+    <!-- Live rate preview -->
+    <div class="rate-preview" id="ratePreview">
+      Parking for <span id="previewTime">30</span> mins →
+      Normal charge: <span id="previewBill">₹0</span> ·
+      If 20 mins late → Fine: <span id="previewFine">₹0</span>
+    </div>
+  </div>
+
+  <!-- SUBMIT BUTTON -->
+  <button class="btn-submit" id="submitBtn" onclick="submitSetup()">
+    🚀 Launch Parking Lot
+  </button>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon"></span>
+  <span class="toast-msg" id="toastMsg"></span>
+</div>
+
+<script>
+  // ============================================================
+  // PRIORITY SLOTS TAG INPUT
+  // Lets manager type slot numbers and press Enter to add them
+  // ============================================================
+
+  let prioritySlots = []   // Stores the list of priority slot numbers
+
+  const tagInput   = document.getElementById('tagInput')
+  const tagsWrapper = document.getElementById('tagsWrapper')
+
+  // Listen for Enter or comma key
+  tagInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      addTag(this.value.trim())
+      this.value = ''
+    }
+    // Backspace on empty input removes last tag
+    if (e.key === 'Backspace' && this.value === '' && prioritySlots.length > 0) {
+      removeTag(prioritySlots[prioritySlots.length - 1])
+    }
+  })
+
+  function addTag(val) {
+    const num = parseInt(val)
+    // Validate: must be a number, positive, not already added
+    if (!val || isNaN(num) || num < 1) return
+    if (prioritySlots.includes(num)) return
+
+    prioritySlots.push(num)
+    renderTags()
+  }
+
+  function removeTag(num) {
+    prioritySlots = prioritySlots.filter(n => n !== num)
+    renderTags()
+  }
+
+  function renderTags() {
+    // Remove all existing tags (but keep the input)
+    const existingTags = tagsWrapper.querySelectorAll('.slot-tag')
+    existingTags.forEach(t => t.remove())
+
+    // Add a tag element for each priority slot
+    prioritySlots.sort((a,b) => a - b).forEach(num => {
+      const tag = document.createElement('div')
+      tag.className = 'slot-tag'
+      tag.innerHTML = `Slot ${num} <button onclick="removeTag(${num})" title="Remove">×</button>`
+      tagsWrapper.insertBefore(tag, tagInput)
+    })
+  }
+
+
+  // ============================================================
+  // LIVE RATE PREVIEW
+  // Shows example bill as manager types rates
+  // ============================================================
+
+  document.getElementById('ratePer5').addEventListener('input', updatePreview)
+  document.getElementById('finePer10').addEventListener('input', updatePreview)
+
+  function updatePreview() {
+    const rate = parseFloat(document.getElementById('ratePer5').value) || 0
+    const fine = parseFloat(document.getElementById('finePer10').value) || 0
+
+    const preview = document.getElementById('ratePreview')
+
+    if (rate > 0 || fine > 0) {
+      preview.classList.add('visible')
+      const bill = (30 / 5) * rate        // 30 min parking
+      const fineAmt = (20 / 10) * fine    // 20 min overtime
+      document.getElementById('previewBill').textContent = `₹${bill.toFixed(2)}`
+      document.getElementById('previewFine').textContent = `₹${fineAmt.toFixed(2)}`
+    } else {
+      preview.classList.remove('visible')
+    }
+  }
+
+
+  // ============================================================
+  // SUBMIT SETUP
+  // Collects all form data and sends to Flask API
+  // ============================================================
+
+  async function submitSetup() {
+    const totalSlots  = parseInt(document.getElementById('totalSlots').value)
+    const ratePer5    = parseFloat(document.getElementById('ratePer5').value)
+    const finePer10   = parseFloat(document.getElementById('finePer10').value)
+
+    // Collect checked fields
+    const fieldCheckboxes = document.querySelectorAll('.fields-grid input[type="checkbox"]:not([disabled]):checked')
+    const fieldsToCollect = Array.from(fieldCheckboxes).map(cb => cb.value)
+
+    // ── VALIDATION ──
+    if (!totalSlots || totalSlots < 1) {
+      showToast('error', '⚠️', 'Please enter total number of slots!')
+      return
+    }
+    if (isNaN(ratePer5) || ratePer5 < 0) {
+      showToast('error', '⚠️', 'Please enter a valid rate per 5 mins!')
+      return
+    }
+    if (isNaN(finePer10) || finePer10 < 0) {
+      showToast('error', '⚠️', 'Please enter a valid fine per 10 mins!')
+      return
+    }
+
+    // Validate priority slots are within total slots range
+    const invalidSlots = prioritySlots.filter(s => s > totalSlots)
+    if (invalidSlots.length > 0) {
+      showToast('error', '⚠️', `Slot(s) ${invalidSlots.join(', ')} exceed total slots!`)
+      return
+    }
+
+    // ── SEND TO FLASK API ──
+    const btn = document.getElementById('submitBtn')
+    btn.disabled = true
+    btn.textContent = '⏳ Setting up...'
+
+    try {
+      const response = await fetch('http://localhost:5000/api/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          total_slots:       totalSlots,
+          priority_slots:    prioritySlots,
+          fields_to_collect: fieldsToCollect,
+          rate_per_5min:     ratePer5,
+          fine_per_10min:    finePer10
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        showToast('success', '✅', 'Parking lot configured successfully!')
+        document.getElementById('successBanner').classList.add('show')
+        document.getElementById('step1').classList.remove('active')
+        document.getElementById('step1').classList.add('done')
+        document.getElementById('step2').classList.add('active')
+        btn.textContent = '✅ Setup Complete!'
+      } else {
+        showToast('error', '❌', data.message || 'Setup failed!')
+        btn.disabled = false
+        btn.textContent = '🚀 Launch Parking Lot'
+      }
+
+    } catch (err) {
+      // If Flask server is not running
+      showToast('error', '🔌', 'Cannot connect to server! Is Flask running on port 5000?')
+      btn.disabled = false
+      btn.textContent = '🚀 Launch Parking Lot'
+    }
+  }
+
+
+  // ============================================================
+  // TOAST HELPER
+  // Shows a small notification at the bottom right
+  // ============================================================
+
+  function showToast(type, icon, msg) {
+    const toast = document.getElementById('toast')
+    document.getElementById('toastIcon').textContent = icon
+    document.getElementById('toastMsg').textContent = msg
+    toast.className = `toast ${type} show`
+
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+      toast.classList.remove('show')
+    }, 3000)
+  }
+</script>
+
+</body>
+</html>

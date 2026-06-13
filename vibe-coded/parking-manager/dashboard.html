@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ParkEase — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0a0f;
+      --surface:  #13131a;
+      --border:   #2a2a3a;
+      --accent:   #f0c040;
+      --accent2:  #ff6b35;
+      --text:     #e8e8f0;
+      --muted:    #7070a0;
+      --success:  #40d080;
+      --danger:   #ff4060;
+      --warning:  #ff9f40;
+      --radius:   12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(240,192,64,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(240,192,64,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,15,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+
+    .logo-row { display: flex; align-items: center; gap: 12px; }
+    .logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 8px; display: grid; place-items: center; font-size: 18px; }
+    .logo-text { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; }
+    .logo-text span { color: var(--accent); }
+
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    .btn-sm {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-sm.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .btn-sm.primary:hover { background: #f5d060; color: var(--bg); }
+
+    .refresh-btn { cursor: pointer; }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      position: relative; z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* ── PAGE TITLE ── */
+    .page-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 32px;
+      animation: fadeDown 0.5s ease both;
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px; font-weight: 800;
+      line-height: 1;
+    }
+
+    .page-title span { color: var(--accent); }
+    .page-subtitle { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover { border-color: var(--accent); }
+
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .stat-value.green  { color: var(--success); }
+    .stat-value.yellow { color: var(--accent); }
+    .stat-value.red    { color: var(--danger); }
+    .stat-value.orange { color: var(--warning); }
+
+    /* ── SEARCH BAR ── */
+    .search-row {
+      display: flex; gap: 12px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+
+    .search-wrap {
+      flex: 1; position: relative;
+    }
+
+    .search-icon {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted); font-size: 14px;
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px 12px 40px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(240,192,64,0.1);
+    }
+
+    .search-input::placeholder { color: var(--muted); opacity: 0.6; }
+
+    .filter-btns { display: flex; gap: 8px; }
+
+    .filter-btn {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .filter-btn.active, .filter-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── SLOTS GRID ── */
+    .slots-section {
+      animation: fadeUp 0.5s 0.3s ease both;
+    }
+
+    .section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    /* ── SLOT CARD ── */
+    .slot-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      transition: all 0.25s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      animation: popIn 0.3s ease both;
+    }
+
+    .slot-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+
+    .slot-card.free::before    { background: var(--success); }
+    .slot-card.occupied::before { background: var(--accent2); }
+    .slot-card.overtime::before { background: var(--danger); }
+
+    .slot-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .slot-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .slot-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px; font-weight: 800;
+      color: var(--text);
+    }
+
+    .slot-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+    .badge {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .badge.free     { background: rgba(64,208,128,0.15); color: var(--success); }
+    .badge.occupied { background: rgba(255,107,53,0.15);  color: var(--accent2); }
+    .badge.overtime { background: rgba(255,64,96,0.15);   color: var(--danger); }
+    .badge.priority { background: rgba(240,192,64,0.15);  color: var(--accent); }
+    .badge.unpaid   { background: rgba(255,64,96,0.15);   color: var(--danger); }
+    .badge.paid     { background: rgba(64,208,128,0.15);  color: var(--success); }
+
+    .slot-status-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .slot-info { font-size: 12px; color: var(--muted); line-height: 1.8; }
+    .slot-info strong { color: var(--text); font-weight: 400; }
+
+    .slot-time-bar {
+      margin-top: 12px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .slot-time-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 1s linear;
+    }
+
+    .slot-time-fill.ok       { background: var(--success); }
+    .slot-time-fill.warning  { background: var(--warning); }
+    .slot-time-fill.overtime { background: var(--danger); }
+
+    .slot-actions {
+      display: flex; gap: 8px;
+      margin-top: 14px;
+    }
+
+    .slot-btn {
+      flex: 1; padding: 8px 0;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .slot-btn:hover          { border-color: var(--accent); color: var(--accent); }
+    .slot-btn.checkout-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .slot-btn.danger-btn:hover   { border-color: var(--danger); color: var(--danger); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none; place-items: center;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-overlay.show { display: grid; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      width: 90%; max-width: 440px;
+      animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px; font-weight: 700;
+    }
+
+    .modal-close {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      display: grid; place-items: center;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover { border-color: var(--danger); color: var(--danger); }
+
+    .bill-row {
+      display: flex; justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .bill-row:last-of-type { border-bottom: none; }
+    .bill-row .label { color: var(--muted); }
+    .bill-row .value { color: var(--text); font-weight: 500; }
+    .bill-row.total .label { color: var(--text); font-family: 'Syne', sans-serif; font-weight: 700; }
+    .bill-row.total .value { color: var(--accent); font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; }
+    .bill-row.fine .value  { color: var(--danger); }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+
+    .modal-btn {
+      flex: 1; padding: 12px;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 13px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .modal-btn.paid-btn {
+      background: var(--success); color: var(--bg); border-color: var(--success);
+    }
+
+    .modal-btn.unpaid-btn {
+      background: var(--bg); color: var(--danger); border-color: var(--danger);
+    }
+
+    .modal-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--text); margin-bottom: 8px; }
+    .empty-state p  { font-size: 13px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 32px; right: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      font-size: 13px;
+      display: flex; align-items: center; gap: 10px;
+      z-index: 999;
+      transform: translateY(80px); opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-width: 300px;
+    }
+
+    .toast.show     { transform: translateY(0); opacity: 1; }
+    .toast.success  { border-color: var(--success); }
+    .toast.error    { border-color: var(--danger); }
+
+    /* ── LIVE INDICATOR ── */
+    .live-dot {
+      width: 8px; height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeDown { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(12px);  } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+    @keyframes popIn    { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+    @keyframes slideUp  { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .topbar { padding: 0 16px; }
+      .main { padding: 20px 16px; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .filter-btns { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<nav class="topbar">
+  <div class="logo-row">
+    <div class="logo-icon">🅿️</div>
+    <div class="logo-text">Park<span>Ease</span></div>
+  </div>
+  <div class="topbar-right">
+    <span style="font-size:12px;color:var(--muted)">
+      <span class="live-dot"></span>Live
+    </span>
+    <button class="btn-sm refresh-btn" onclick="loadDashboard()">⟳ Refresh</button>
+    <a href="entry.html" class="btn-sm primary">+ New Parker</a>
+    <a href="setup.html" class="btn-sm">⚙ Setup</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Slot <span>Dashboard</span></div>
+      <div class="page-subtitle" id="lastUpdated">Loading...</div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Slots</div>
+      <div class="stat-value yellow" id="statTotal">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Free Slots</div>
+      <div class="stat-value green" id="statFree">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Occupied</div>
+      <div class="stat-value orange" id="statOccupied">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Overtime</div>
+      <div class="stat-value red" id="statOvertime">—</div>
+    </div>
+  </div>
+
+  <!-- SEARCH + FILTER -->
+  <div class="search-row">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        class="search-input"
+        id="searchInput"
+        placeholder="Search by name or slot number..."
+        oninput="handleSearch()"
+      />
+    </div>
+    <div class="filter-btns">
+      <button class="filter-btn active" data-filter="all"      onclick="setFilter('all',this)">All</button>
+      <button class="filter-btn"        data-filter="free"     onclick="setFilter('free',this)">Free</button>
+      <button class="filter-btn"        data-filter="occupied" onclick="setFilter('occupied',this)">Occupied</button>
+      <button class="filter-btn"        data-filter="overtime" onclick="setFilter('overtime',this)">Overtime</button>
+    </div>
+  </div>
+
+  <!-- SLOTS GRID -->
+  <div class="slots-section">
+    <div class="section-label" id="slotsLabel">All Slots</div>
+    <div class="slots-grid" id="slotsGrid">
+      <!-- Slots rendered by JS -->
+    </div>
+  </div>
+
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal-overlay" id="checkoutModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🚪 Checkout — Slot <span id="modalSlotNo"></span></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div id="modalBillContent">
+      <!-- Bill rows rendered by JS -->
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-btn paid-btn"   onclick="confirmCheckout('paid')">✅ Mark Paid & Free Slot</button>
+      <button class="modal-btn unpaid-btn" onclick="confirmCheckout('unpaid')">⚠ Free Without Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toastIcon"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+  // ============================================================
+  // STATE
+  // ============================================================
+  let allSlots    = []       // Full dashboard data from API
+  let currentFilter = 'all' // Current filter: all / free / occupied / overtime
+  let checkoutSlot  = null  // Which slot is being checked out
+
+  // ============================================================
+  // LOAD DASHBOARD FROM FLASK API
+  // ============================================================
+  async function loadDashboard() {
+    try {
+      const res  = await fetch('http://localhost:5000/api/dashboard')
+      const data = await res.json()
+
+      if (!data.success) {
+        showToast('error', '❌', data.message)
+        return
+      }
+
+      allSlots = data.dashboard
+      renderStats()
+      renderSlots()
+
+      const now = new Date()
+      document.getElementById('lastUpdated').textContent =
+        `Last updated: ${now.toLocaleTimeString()}`
+
+    } catch (err) {
+      document.getElementById('slotsGrid').innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="icon">🔌</div>
+          <h3>Cannot connect to server</h3>
+          <p>Make sure Flask is running on port 5000</p>
+        </div>`
+    }
+  }
+
+  // ============================================================
+  // RENDER STATS ROW
+  // ============================================================
+  function renderStats() {
+    const total    = allSlots.length
+    const free     = allSlots.filter(s => s.status === 'free').length
+    const occupied = allSlots.filter(s => s.status === 'occupied').length
+    const overtime = allSlots.filter(s =>
+      s.status === 'occupied' && s.time_info?.is_overtime
+    ).length
+
+    document.getElementById('statTotal').textContent    = total
+    document.getElementById('statFree').textContent     = free
+    document.getElementById('statOccupied').textContent = occupied
+    document.getElementById('statOvertime').textContent = overtime
+  }
+
+  // ============================================================
+  // RENDER SLOTS GRID
+  // ============================================================
+  function renderSlots(slots = null) {
+    const grid = document.getElementById('slotsGrid')
+    const data = slots || getFilteredSlots()
+
+    if (data.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="icon">🔍</div>
+          <h3>No slots found</h3>
+          <p>Try a different filter or search term</p>
+        </div>`
+      return
+    }
+
+    grid.innerHTML = data.map(slot => buildSlotCard(slot)).join('')
+  }
+
+  // ============================================================
+  // BUILD A SINGLE SLOT CARD HTML
+  // ============================================================
+  function buildSlotCard(slot) {
+    const isPriority = slot.is_priority
+    const isFree     = slot.status === 'free'
+    const isOvertime = slot.status === 'occupied' && slot.time_info?.is_overtime
+
+    // Determine card class
+    const cardClass = isOvertime ? 'overtime' : slot.status
+
+    // Status badge
+    const statusBadge = isFree
+      ? `<span class="badge free">FREE</span>`
+      : isOvertime
+        ? `<span class="badge overtime">OVERTIME</span>`
+        : `<span class="badge occupied">OCCUPIED</span>`
+
+    const priorityBadge = isPriority
+      ? `<span class="badge priority">⭐ PRIORITY</span>`
+      : ''
+
+    // Icon
+    const icon = isFree ? '🟢' : isOvertime ? '🔴' : '🟠'
+
+    // Content for occupied slots
+    let occupiedContent = ''
+    let actionsHtml = ''
+
+    if (!isFree) {
+      const p        = slot.parker
+      const ti       = slot.time_info
+      const elapsed  = ti.elapsed_minutes
+      const booked   = ti.duration_booked
+      const progress = Math.min((elapsed / booked) * 100, 100)
+
+      // Progress bar color
+      const fillClass = isOvertime ? 'overtime' : progress > 75 ? 'warning' : 'ok'
+
+      // Build info lines from whatever fields are available
+      const infoLines = []
+      if (p.name)           infoLines.push(`<div>👤 <strong>${p.name}</strong></div>`)
+      if (p.contact)        infoLines.push(`<div>📞 <strong>${p.contact}</strong></div>`)
+      if (p.vehicle_number) infoLines.push(`<div>🚗 <strong>${p.vehicle_number}</strong></div>`)
+      infoLines.push(`<div>⏱ <strong>${elapsed} / ${booked} mins</strong></div>`)
+      if (isOvertime)
+        infoLines.push(`<div style="color:var(--danger)">⚠ +${ti.overtime_minutes} mins over</div>`)
+
+      const payBadge = p.payment_status === 'paid'
+        ? `<span class="badge paid">PAID</span>`
+        : `<span class="badge unpaid">UNPAID</span>`
+
+      occupiedContent = `
+        <div class="slot-info">${infoLines.join('')}</div>
+        <div class="slot-time-bar">
+          <div class="slot-time-fill ${fillClass}" style="width:${progress}%"></div>
+        </div>
+        <div style="margin-top:8px">${payBadge}</div>
+      `
+
+      actionsHtml = `
+        <div class="slot-actions">
+          <button class="slot-btn checkout-btn" onclick="openCheckout(${slot.slot_no})">Checkout</button>
+          <button class="slot-btn" onclick="togglePayment(${slot.slot_no}, '${p.payment_status}')">
+            ${p.payment_status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
+          </button>
+        </div>
+      `
+    }
+
+    return `
+      <div class="slot-card ${cardClass}" id="slot-card-${slot.slot_no}">
+        <div class="slot-top">
+          <div class="slot-number">#${slot.slot_no}</div>
+          <div class="slot-badges">
+            ${statusBadge}
+            ${priorityBadge}
+          </div>
+        </div>
+        <div class="slot-status-icon">${icon}</div>
+        ${occupiedContent}
+        ${actionsHtml}
+      </div>
+    `
+  }
+
+  // ============================================================
+  // FILTER
+  // ============================================================
+  function getFilteredSlots() {
+    return allSlots.filter(slot => {
+      if (currentFilter === 'all')      return true
+      if (currentFilter === 'free')     return slot.status === 'free'
+      if (currentFilter === 'occupied') return slot.status === 'occupied'
+      if (currentFilter === 'overtime') return slot.status === 'occupied' && slot.time_info?.is_overtime
+      return true
+    })
+  }
+
+  function setFilter(filter, btn) {
+    currentFilter = filter
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+
+    const labels = { all: 'All Slots', free: 'Free Slots', occupied: 'Occupied Slots', overtime: 'Overtime Slots' }
+    document.getElementById('slotsLabel').textContent = labels[filter]
+    renderSlots()
+  }
+
+  // ============================================================
+  // SEARCH — calls API search endpoint
+  // ============================================================
+  let searchTimer = null
+
+  async function handleSearch() {
+    const query = document.getElementById('searchInput').value.trim()
+
+    // If empty, show normal filtered view
+    if (!query) { renderSlots(); return }
+
+    // Debounce — wait 300ms after user stops typing
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(async () => {
+      try {
+        const res  = await fetch(`http://localhost:5000/api/search?query=${encodeURIComponent(query)}`)
+        const data = await res.json()
+
+        if (data.success) {
+          // Map search results to same format as dashboard
+          const matched = data.results.map(r => {
+            const full = allSlots.find(s => s.slot_no === r.slot_no)
+            return full || r
+          })
+          renderSlots(matched)
+        } else {
+          renderSlots([])
+        }
+      } catch (err) {
+        showToast('error', '❌', 'Search failed!')
+      }
+    }, 300)
+  }
+
+  // ============================================================
+  // CHECKOUT MODAL — open
+  // ============================================================
+  async function openCheckout(slotNo) {
+    checkoutSlot = slotNo
+    document.getElementById('modalSlotNo').textContent = slotNo
+
+    try {
+      const res  = await fetch(`http://localhost:5000/api/checkout/${slotNo}`)
+      const data = await res.json()
+
+      if (!data.success) { showToast('error', '❌', data.message); return }
+
+      const ti = data.time_info
+      const p  = data.parker
+
+      // Build bill rows
+      document.getElementById('modalBillContent').innerHTML = `
+        <div class="bill-row">
+          <span class="label">Parker</span>
+          <span class="value">${p.name || 'N/A'}</span>
+        </div>
+        <div class="bill-row">
+          <span class="label">Entry Time</span>
+          <span class="value">${ti.entry_time}</span>
+        </div>
+        <div class="bill-row">
+          <span class="label">Time Parked</span>
+          <span class="value">${ti.elapsed_minutes} mins</span>
+        </div>
+        <div class="bill-row">
+          <span class="label">Booked Duration</span>
+          <span class="value">${ti.duration_booked} mins</span>
+        </div>
+        <div class="bill-row">
+          <span class="label">Parking Charge</span>
+          <span class="value">₹${ti.parking_bill}</span>
+        </div>
+        ${ti.is_overtime ? `
+        <div class="bill-row fine">
+          <span class="label">⚠ Overtime Fine (${ti.overtime_minutes} mins)</span>
+          <span class="value">₹${ti.fine}</span>
+        </div>` : ''}
+        <div class="bill-row total">
+          <span class="label">Total Amount</span>
+          <span class="value">₹${ti.total_amount}</span>
+        </div>
+      `
+
+      document.getElementById('checkoutModal').classList.add('show')
+
+    } catch (err) {
+      showToast('error', '❌', 'Could not fetch checkout details!')
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('checkoutModal').classList.remove('show')
+    checkoutSlot = null
+  }
+
+  // ============================================================
+  // CHECKOUT MODAL — confirm (free the slot)
+  // ============================================================
+  async function confirmCheckout(paymentStatus) {
+    if (!checkoutSlot) return
+
+    try {
+      const res  = await fetch(`http://localhost:5000/api/free/${checkoutSlot}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_status: paymentStatus })
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        showToast('success', '✅', `Slot ${checkoutSlot} is now free!`)
+        closeModal()
+        loadDashboard()   // Refresh dashboard
+      } else {
+        showToast('error', '❌', data.message)
+      }
+    } catch (err) {
+      showToast('error', '❌', 'Checkout failed!')
+    }
+  }
+
+  // ============================================================
+  // TOGGLE PAYMENT STATUS
+  // ============================================================
+  async function togglePayment(slotNo, currentStatus) {
+    const newStatus = currentStatus === 'paid' ? 'unpaid' : 'paid'
+
+    try {
+      const res  = await fetch(`http://localhost:5000/api/payment/${slotNo}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_status: newStatus })
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        showToast('success', '✅', `Payment marked as ${newStatus}!`)
+        loadDashboard()
+      } else {
+        showToast('error', '❌', data.message)
+      }
+    } catch (err) {
+      showToast('error', '❌', 'Payment update failed!')
+    }
+  }
+
+  // ============================================================
+  // TOAST
+  // ============================================================
+  function showToast(type, icon, msg) {
+    const toast = document.getElementById('toast')
+    document.getElementById('toastIcon').textContent = icon
+    document.getElementById('toastMsg').textContent  = msg
+    toast.className = `toast ${type} show`
+    setTimeout(() => toast.classList.remove('show'), 3000)
+  }
+
+  // ============================================================
+  // CLOSE MODAL ON OVERLAY CLICK
+  // ============================================================
+  document.getElementById('checkoutModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal()
+  })
+
+  // ============================================================
+  // AUTO REFRESH every 30 seconds (live feel)
+  // ============================================================
+  loadDashboard()
+  setInterval(loadDashboard, 30000)
+</script>
+
+</body>
+</html>
