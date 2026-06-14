@@ -720,8 +720,8 @@ input[type="date"].form-input { cursor: pointer; color-scheme: dark; }
 .modal-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 20px; font-family: var(--font-display); }
 
 /* ── GITPUSH PAGE ── */
-.gitpush-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; height: calc(100vh - 160px); }
-.gp-left { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+.gitpush-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; min-height: calc(100vh - 160px); }
+.gp-left { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; max-height: calc(100vh - 140px); padding-right: 6px; }
 .gp-right { display: flex; flex-direction: column; }
 
 .gp-checkboxes { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
