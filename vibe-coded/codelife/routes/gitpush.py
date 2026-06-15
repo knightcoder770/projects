@@ -72,7 +72,16 @@ def changed_files():
         return jsonify({"ok": False, "error": error}), 500
 
     files = git_ops.git_get_changed_files(folder)
-    return jsonify({"ok": True, "files": files})
+
+    # Clean paths and filter out __pycache__ and .pyc
+    cleaned = []
+    for f in files:
+        path = f["path"].strip().strip('"').strip("'")
+        if "__pycache__" in path or path.endswith(".pyc") or path.endswith(".pyo"):
+            continue
+        cleaned.append({"status": f["status"], "path": path})
+
+    return jsonify({"ok": True, "files": cleaned})
 
 
 @gitpush_bp.route("/api/gitpush/preview-cleanup", methods=["POST"])
@@ -103,10 +112,16 @@ def push():
     remote_url = body.get("remote_url", "").strip()
     commit_msg = body.get("commit_message", "Update via CodeLife").strip()
     branch = body.get("branch", "main").strip()
-    specific_files = body.get("specific_files", None)
-    # Strip any quotes git may have added to paths
+    specific_files_raw = body.get("specific_files", None)
+    # Extract from wrapper object to avoid JSON array first-element corruption
+    if specific_files_raw and isinstance(specific_files_raw, dict):
+        specific_files = specific_files_raw.get("files", [])
+    elif specific_files_raw and isinstance(specific_files_raw, list):
+        specific_files = specific_files_raw
+    else:
+        specific_files = None
     if specific_files:
-        specific_files = [f.strip().strip('"').strip("'") for f in specific_files]
+        specific_files = [f.strip() for f in specific_files if f and f.strip()]
     remove_junk = body.get("remove_junk", True)
     protect_sensitive = body.get("protect_sensitive", True)
 
